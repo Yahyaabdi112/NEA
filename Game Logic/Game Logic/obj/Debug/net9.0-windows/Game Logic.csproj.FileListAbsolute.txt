@@ -1,0 +1,15 @@
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\bin\Debug\net9.0-windows\Game Logic.exe
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\bin\Debug\net9.0-windows\Game Logic.deps.json
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\bin\Debug\net9.0-windows\Game Logic.runtimeconfig.json
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\bin\Debug\net9.0-windows\Game Logic.dll
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\bin\Debug\net9.0-windows\Game Logic.pdb
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\Game Logic.csproj.ResolveComReference.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\Game Logic.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\Game Logic.AssemblyInfoInputs.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\Game Logic.AssemblyInfo.cs
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\Game Logic.csproj.CoreCompileInputs.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\Game Logic.dll
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\refint\Game Logic.dll
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\Game Logic.pdb
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\Game Logic.genruntimeconfig.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0-windows\ref\Game Logic.dll

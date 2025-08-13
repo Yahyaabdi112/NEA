@@ -1,0 +1,20 @@
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\bin\Debug\net9.0-windows\Game UI.exe
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\bin\Debug\net9.0-windows\Game UI.deps.json
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\bin\Debug\net9.0-windows\Game UI.runtimeconfig.json
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\bin\Debug\net9.0-windows\Game UI.dll
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\bin\Debug\net9.0-windows\Game UI.pdb
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game_UI.Form1.resources
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game_UI.GameWindow.resources
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game UI.csproj.GenerateResource.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game UI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game UI.AssemblyInfoInputs.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game UI.AssemblyInfo.cs
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game UI.csproj.CoreCompileInputs.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game UI.dll
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\refint\Game UI.dll
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game UI.pdb
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game UI.genruntimeconfig.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\ref\Game UI.dll
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game UI.csproj.ResolveComReference.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game_UI.Properties.Resources.resources
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\Game UI\Game UI\obj\Debug\net9.0-windows\Game_UI.TutorialWindow.resources

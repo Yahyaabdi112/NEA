@@ -1,0 +1,5 @@
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0\Game Logic.csproj.ResolveComReference.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0\Game Logic.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0\Game Logic.AssemblyInfoInputs.cache
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0\Game Logic.AssemblyInfo.cs
+C:\Users\lancaster\Documents\NEA\NEA PROJECT FILES\FinalProgram\Game Logic\Game Logic\obj\Debug\net9.0\Game Logic.csproj.CoreCompileInputs.cache
