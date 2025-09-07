@@ -118,14 +118,8 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="Chess-Wallpaper-Free-Download" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Chess-Wallpaper-Free-Download.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="HD-wallpaper-game-chess" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\HD-wallpaper-game-chess.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="w_pawn_svg_withShadow" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\w_pawn_svg_withShadow.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-    <comment>The white pawn </comment>
+    <comment>The White Pawn</comment>
   </data>
 </root>

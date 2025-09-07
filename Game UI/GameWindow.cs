@@ -24,7 +24,10 @@ namespace Game_UI
         bool WindowResize;
 
 
-
+       public class Imageresources
+       {
+            public static System.Drawing.Image WhitePawnImage => Properties.Resources.w_pawn_svg_withShadow;
+       }
         private void btnquit_Click(object sender, EventArgs e)
         {
             Form1 form = new Form1();
@@ -42,51 +45,92 @@ namespace Game_UI
             Tiles[,] tiles = new Tiles[9, 9];
             CreateBoard<Tiles> board = new CreateBoard<Tiles>(tiles);
 
-
             board.create();
-            Console.WriteLine(tiles[0, 0].IsOccupied);
+            Dictionary<(int row, int column), Piece> pieces = new Dictionary<(int row, int column), Piece>(); //the dictionary which is passed into the addPieces object - dont call this dictionary when trying to access the dictionary, this dictionary is just a meant to be passed in to the addPieces object to change the value of the dictionary of the addPieces object from generic to Piece
+            AddPieces<Piece, Tiles> addPieces = new AddPieces<Piece, Tiles>(pieces, tiles); //How the pieces are added
+            addPieces.add("pawn");
+            
+            
 
-            for (int i = 0; i < 9; i++)
+
+            for (int i = 0; i < 8; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
                     // PointF point = new PointF(Convert.ToInt16(tiles[i, j].column), Convert.ToInt16(tiles[i, j].row));
 
 
-                    PictureBox picture = new PictureBox();
-
+                    PictureBox tilePicture = new PictureBox();
+                    PictureBox piecepicture = new PictureBox();
+                    
 
 
                     if (WindowResize == true)
                     {
-                        picture.Size = new Size(55 * (Newx / x), 55 * (Newy / y));
-                        picture.Location = new Point((tiles[i, j].column + i * 55) * (Newx / x), (tiles[i, j].row + j * 55) * (Newy / y));
-                        picture.Name = "Tile: " + Convert.ToString(tiles[i, j].column) + ", " + Convert.ToString(tiles[i, j].row);
-                        picture.Image = tiles[i, j].Tileimage;
+                        tilePicture.Size = new Size(55 * (Newx / x), 55 * (Newy / y));
+                        tilePicture.Location = new Point((tiles[i, j].column + i * 55) * (Newx / x), (tiles[i, j].row + j * 55) * (Newy / y));
+                        tilePicture.Name = "Tile: " + Convert.ToString(tiles[i, j].column) + ", " + Convert.ToString(tiles[i, j].row);
+                        tilePicture.Image = tiles[i, j].Tileimage;
+                        
+
+                        if (j == 1 || j == 6)
+                        {
+
+                            piecepicture.Size = new Size(55 * (Newx / x), 55 * (Newy / y));
+                            piecepicture.Location = new Point((tiles[i, j].column + i * 55) * (Newx / x), (tiles[i, j].row + j * 55) * (Newy / y));
+                            piecepicture.Name = "Tile: " + Convert.ToString(tiles[i, j].column) + ", " + Convert.ToString(tiles[i, j].row);
+                            piecepicture.Image = addPieces._Pieces[(i, j)].PieceImage;
+                            piecepicture.SizeMode = PictureBoxSizeMode.Zoom;
+                            piecepicture.BackColor = Color.Transparent;
+
+                        }
                     }
                     else
                     {
-                        picture.Name = "Tile: " + Convert.ToString(tiles[i, j].column) + ", " + Convert.ToString(tiles[i, j].row);
-                        picture.Size = new Size(55, 55);
-                        picture.Location = new Point(tiles[i, j].column + i * 55, tiles[i, j].row + j * 55);
-                        picture.Image = tiles[i, j].Tileimage;
+                        tilePicture.Name = "Tile: " + Convert.ToString(tiles[i, j].column) + ", " + Convert.ToString(tiles[i, j].row);
+                        tilePicture.Size = new Size(55, 55);
+                        tilePicture.Location = new Point(tiles[i, j].column + i * 55, tiles[i, j].row + j * 55);
+                        tilePicture.Image = tiles[i, j].Tileimage;
+                        //tilePicture.SendToBack();
+
+                        if (j == 1 || j == 6)
+                        {
+                            piecepicture.Size = new Size(20, 20);
+                            piecepicture.Location = new Point(tiles[i, j].column + i * 55, tiles[i, j].row + j * 55);
+                            
+                            piecepicture.Image = addPieces._Pieces[(i, j)].PieceImage;
+                            
+                            piecepicture.SizeMode = PictureBoxSizeMode.Zoom;
+                            //piecepicture.BackColor = Color.Transparent;
+
+                            //piecepicture.Name = addPieces._Pieces[(i + 1, j + 1)].type;
+                        }
                     }
 
-                    this.Controls.Add(picture);
-                    if (i == 8)
+                    
+                    this.Controls.Add(tilePicture);
+                    
+                        this.Controls.Add(piecepicture);
+                        piecepicture.BringToFront();
+                    
+                    /*if (i == 8)
                     {
                         for (int k = 0; k < 9; k++)
                         {
                             this.Controls.RemoveByKey($"Tile: 8, {k}");
-                            
+
                         }
-                    }
+                    }*/
 
                 }
             }
+            
+            
 
+            
         }
-
+         
+          
         private void GameWindow_Paint(object sender, PaintEventArgs e)
         {
            

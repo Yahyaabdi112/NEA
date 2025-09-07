@@ -1,9 +1,9 @@
 ﻿
 //This is for loading the chess pieces into a dictionary to be accessed later. I had a few issues with the file path(for the dictionary to acctually load on other computers i would need to shorten the file path)I did some troubleshooting and looking online at file path syntax so i could get it to work.
 
-    Dictionary<string, Image> ChessPieces = new Dictionary<string, Image>(); //creating the dictionary which holds all the chess pieces
+Dictionary<string, Image> ChessPieces = new Dictionary<string, Image>(); //creating the dictionary which holds all the chess pieces
                                                                              // Pieces(ChessPieces); //adding all the chess pieces to the dictionary
-Tiles[,] tiles = new Tiles[8, 8];
+Tiles[,] tiles = new Tiles[9, 9];
 CreateBoard<Tiles> board = new CreateBoard<Tiles>(tiles);
 
 board.create();
@@ -11,7 +11,7 @@ board.create();
 
 for (int i = 0; i < 8; i++)
 {
-    for (int j = 0; j < 7; j++)
+    for (int j = 0; j < 8; j++)
     {
         // PointF point = new PointF(Convert.ToInt16(tiles[i, j].column), Convert.ToInt16(tiles[i, j].row));
 
@@ -26,6 +26,11 @@ for (int i = 0; i < 8; i++)
         //picture.Image = tiles[i, j].Tileimage;
 
     }
+}
+
+if (File.Exists(@"..\..\..\..\..\JohnPablok Cburnett Chess-v2\JohnPablok Cburnett Chess set\board squares\square brown light_svg.jpg"))
+{
+    Console.WriteLine("filepath works");
 }
 
 
@@ -114,7 +119,7 @@ public class CreateBoard<T> where T : ITiles, new() // The '<T>' means the class
             }
             else // if the column number is odd
             {
-                for (int j = 0; j < 8; j++) //the loop for the rows if the column number is odd
+                for (int j = 0; j < 9; j++) //the loop for the rows if the column number is odd
                 {
                     if (j % 2 == 0) // if the row number is even then a light square
                     {
@@ -137,7 +142,7 @@ public class CreateBoard<T> where T : ITiles, new() // The '<T>' means the class
         }
     }
 
-   
+   //the error is that the file path only works for this project but for game solution project the file path is diff so file not found
 }
  public interface IPiece
  { 
@@ -174,39 +179,75 @@ public interface IAddPieces
     void SetPieces( Dictionary<(int row, int column), IPiece> pieces);
 }
 
-public class AddPieces : IAddPieces
+public class AddPieces<T, Z> where T : Piece, new() where Z : ITiles
 {
-    Dictionary<(int row, int column), IPiece> _Pieces; //Its of type IPiece so each piece in the dictionary can use the fields from IPiece
+    public Dictionary<(int row, int column), T> _Pieces { get; set; } //Its of type IPiece so each piece in the dictionary can use the fields from IPiece
+    public Z[,] _tiles; // The 2d array of tiles, we assign the array to the one already declared for the createboard lateron in the main
 
-
-    public void SetPieces(Dictionary<(int row, int column), IPiece> pieces) //Allows the user to change the value of the dictionary from IPiece to Piece in the main
+    public  AddPieces(Dictionary<(int row, int column), T> pieces, Z[,] tiles) //Allows the user to change the value of the dictionary from IPiece to Piece in the main
     {
         _Pieces = pieces;
+        _tiles = tiles;
+
     }
 
-    public void add(ICreateBoard board, IPiece piece)
-    {
-        board.create();
+    
 
-        switch (piece.type)
+   
+
+    public void add(string PieceType)
+    {
+        
+        
+        //var concreteBoard = board as CreateBoard<Tiles>;
+        //var tilesArray = concreteBoard._tiles;
+        switch (PieceType.ToLower())
         {
             case "pawn":
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i < 9; i++)
                 {
-                    _Pieces.Add((i, 1), piece);
-                    piece.PieceImage = Image.FromFile(@"..\..\..\..\..\JohnPablok Cburnett Chess - v2\JohnPablok Cburnett Chess set\PNGs\With Shadow\256px\b_pawn_png_shadow_256px.png");
+                    T BlackPawn = new T();
+                    
+                        _Pieces.Add((i, 1), BlackPawn); //add IPiece objects for each black pawn
+                         BlackPawn.PieceImage = Image.FromFile(@"..\..\..\..\..\JohnPablok Cburnett Chess-v2\JohnPablok Cburnett Chess set\SVG with shadow\b_pawn_svg_withShadow-removebg-preview.png"); //add black pawn photos for each black pawn
+
+                        _tiles[i, 1].IsOccupied = true;
+                        BlackPawn.type = "pawn";
+                    
                 }
-            break;
+                for (int i = 0; i < 9; i++)
+                {
+                    T WhitePawn = new T();
+                    
+                    _Pieces.Add((i, 6), WhitePawn);
+                    
+                    WhitePawn.PieceImage = Image.FromFile(@"..\..\..\..\..\JohnPablok Cburnett Chess-v2\JohnPablok Cburnett Chess set\SVG with shadow\w_pawn_svg_withShadow-removebg-preview.png");
+
+
+                    _tiles[i, 6].IsOccupied = true;
+                    WhitePawn.type = "pawn";
+
+                }
+                  break;
+            /*case "rook":
+                {
+                    _Pieces.Add((0, 0), piece);
+                    piece.PieceImage = Image.FromFile(@"..\..\..\..\..\JohnPablok Cburnett Chess-v2\JohnPablok Cburnett Chess set\SVG with shadow\b_rook_svg_withShadow.jpg");
+                }
+                break;*/
+
 
         }
 
     }
+
 }
 
-/*public class UpdateBoard<T> where T : ITiles, new() //this class updates the position of pieces
+
+public class UpdateBoard<T> where T : ITiles, new() //this class updates the position of pieces
 {
     ICreateBoard createboard;
-     int row, row2, column, column2;// the original position of the piece and the new position of the piece
+    int row, row2, column, column2;// the original position of the piece and the new position of the piece
     public T[,] tiles;
 
     public UpdateBoard(int row, int column, int row2, int column2)
@@ -224,6 +265,7 @@ public class AddPieces : IAddPieces
     }
 }
 
+
 public class BoardManager
 {
     private static bool IsWhiteturn, IsBlackturn;
@@ -233,8 +275,8 @@ public class BoardManager
     {
         int I = 0;
         IsWhiteturn = true;
-        string Whiteturn =  "Whiteturn";
-        string Blackturn =  "Blackturn";
+        string Whiteturn = "Whiteturn";
+        string Blackturn = "Blackturn";
 
         if (I % 2 == 0)
         {
@@ -258,8 +300,10 @@ public class BoardManager
     }
 
     public void Piecemovement(ICreateBoard createboard, IPiece piece)
-    { 
-       
+    {
+
     }
-}*/
+}
+
+
 
