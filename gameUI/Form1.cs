@@ -12,7 +12,7 @@ namespace gameUI
 
         private void btnplay_Click(object sender, EventArgs e)
         {
-            GameWindow window = new GameWindow();
+            GameSettings window = new GameSettings();
             window.Show();
             this.Hide();
         }
@@ -51,7 +51,7 @@ namespace gameUI
 
         private void btnplay_Click_1(object sender, EventArgs e)
         {
-            GameWindow window = new GameWindow();
+            GameSettings window = new GameSettings();
             window.Show();
             this.Hide();
         }

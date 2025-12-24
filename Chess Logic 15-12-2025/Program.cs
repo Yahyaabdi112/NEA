@@ -35,7 +35,7 @@ public enum PieceTypes //The different possible types of pieces. With this we ca
 
 }
 
-public enum Color //The different possible piece colours. With this we can set pieces and tiles colours later on and determine what color a piece is.  
+public enum itemColor //The different possible piece colours. With this we can set pieces and tiles colours later on and determine what color a piece is.  
 
 {
 
@@ -50,7 +50,7 @@ public interface IPiece //The basis for each piece in the project. Its used as a
 
     (int row, int column) Position { get; set; } //The position of each piece on the board. Uses a tuple with row and column.  
 
-    Color Color { get; set; } //The Colour of each piece. Uses the Enum Color from earlier as its type  
+    itemColor Color { get; set; } //The Colour of each piece. Uses the Enum Color from earlier as its type  
 
     PieceTypes PieceType { get; } //The type of each piece. Uses the Enum PieceTypes from earlier as its type  
 
@@ -69,7 +69,7 @@ public interface ITile //Used as the basis for all tiles on the gameboard.
 
     (int row, int column) Position { get; set; } //Used so we can determine where a tile is.  
 
-    Color tileColor { get; set; } //Used to determine the colour of a tile, important when creating the board.  
+    itemColor tileColor { get; set; } //Used to determine the colour of a tile, important when creating the board.  
 
 
 }
@@ -82,7 +82,7 @@ public class Tile : ITile
 
     public (int row, int column) Position { get; set; }
 
-    public Color tileColor { get; set; }
+    public itemColor tileColor { get; set; }
 
 
 }
@@ -146,7 +146,7 @@ public class BlackPieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        knight = new Knight(Color.black, Position); //create a knight set its colour to black, set its position to the given position and store this knight in the object knight property  
+        knight = new Knight(itemColor.black, Position); //create a knight set its colour to black, set its position to the given position and store this knight in the object knight property  
 
         return knight; //return the knight into a variable where the knight was called  
 
@@ -158,7 +158,7 @@ public class BlackPieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        bishop = new Bishop(Color.black, Position); //create a bishop set its colour to black, set its position to the given position and store this bishop in the object bishop property  
+        bishop = new Bishop(itemColor.black, Position); //create a bishop set its colour to black, set its position to the given position and store this bishop in the object bishop property  
 
         return bishop; //return the bishop into a variable where the bishop was called  
 
@@ -170,7 +170,7 @@ public class BlackPieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        pawn = new Pawn(Color.black, Position); //create a pawn set its colour to black, set its position to the given position and store this pawn in the object pawn property  
+        pawn = new Pawn(itemColor.black, Position); //create a pawn set its colour to black, set its position to the given position and store this pawn in the object pawn property  
 
         return pawn; //return the pawn into a variable where the pawn was called  
 
@@ -182,7 +182,7 @@ public class BlackPieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        rook = new Rook(Color.black, Position); //create a rook set its colour to black, set its position to the given position and store this rook in the object rook property  
+        rook = new Rook(itemColor.black, Position); //create a rook set its colour to black, set its position to the given position and store this rook in the object rook property  
 
         return rook; //return the rook into a variable where the rook was called  
 
@@ -194,7 +194,7 @@ public class BlackPieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        queen = new Queen(Color.black, Position); //create a queen set its colour to black, set its position to the given position and store this queen in the object queen property  
+        queen = new Queen(itemColor.black, Position); //create a queen set its colour to black, set its position to the given position and store this queen in the object queen property  
 
         return queen; //return the queen into a variable where the queen was called  
 
@@ -206,7 +206,7 @@ public class BlackPieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        king = new King(Color.black, Position); //create a king set its colour to black, set its position to the given position and store this king in the object king property  
+        king = new King(itemColor.black, Position); //create a king set its colour to black, set its position to the given position and store this king in the object king property  
 
         return king; //return the king into a variable where the king was called  
 
@@ -241,7 +241,7 @@ public class WhitePieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        knight = new Knight(Color.white, Position);//create a knight set its colour to white, set its position to the given position and store this knight in the object knight property  
+        knight = new Knight(itemColor.white, Position);//create a knight set its colour to white, set its position to the given position and store this knight in the object knight property  
 
         return knight; //return the knight into a variable where the knight was called  
 
@@ -253,7 +253,7 @@ public class WhitePieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        bishop = new Bishop(Color.white, Position); //create a bishop set its colour to white, set its position to the given position and store this bishop in the object bishop property  
+        bishop = new Bishop(itemColor.white, Position); //create a bishop set its colour to white, set its position to the given position and store this bishop in the object bishop property  
 
         return bishop; //return the bishop into a variable where the bishop was called  
 
@@ -265,7 +265,7 @@ public class WhitePieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        pawn = new Pawn(Color.white, Position); //create a pawn set its colour to white, set its position to the given position and store this pawn in the object pawn property  
+        pawn = new Pawn(itemColor.white, Position); //create a pawn set its colour to white, set its position to the given position and store this pawn in the object pawn property  
 
         return pawn; //return the pawn into a variable where the pawn was called  
 
@@ -277,7 +277,7 @@ public class WhitePieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        rook = new Rook(Color.white, Position); //create a rook set its colour to white, set its position to the given position and store this rook in the object rook property  
+        rook = new Rook(itemColor.white, Position); //create a rook set its colour to white, set its position to the given position and store this rook in the object rook property  
 
         return rook; //return the rook into a variable where the rook was called  
 
@@ -289,7 +289,7 @@ public class WhitePieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        queen = new Queen(Color.white, Position); //create a queen set its colour to white, set its position to the given position and store this queen in the object queen property  
+        queen = new Queen(itemColor.white, Position); //create a queen set its colour to white, set its position to the given position and store this queen in the object queen property  
 
         return queen; //return the queen into a variable where the queen was called  
 
@@ -301,7 +301,7 @@ public class WhitePieceFactory : IPieceFactory //This class is a concrete piece 
 
     {
 
-        king = new King(Color.white, Position); //create a king set its colour to white, set its position to the given position and store this king in the object king property  
+        king = new King(itemColor.white, Position); //create a king set its colour to white, set its position to the given position and store this king in the object king property  
 
         return king; //return the king into a variable where the king was called  
 
@@ -314,7 +314,7 @@ public class Knight : IPiece //Concrete Knight class which defines everything ab
 
 {
 
-    public Color Color { get; set; } //The colour of the knight  
+    public itemColor Color { get; set; } //The colour of the knight  
 
     public PieceTypes PieceType { get; set; } //The Piecetype of the knight (set to knight later in the constructor)  
 
@@ -324,7 +324,7 @@ public class Knight : IPiece //Concrete Knight class which defines everything ab
 
 
 
-    public Knight(Color _Color, (int x, int y) _Position) // Constructor - takes in a color and position. It then assigns the given color and position to the instantiated object whilst also making the piecetype knight  
+    public Knight(itemColor _Color, (int x, int y) _Position) // Constructor - takes in a color and position. It then assigns the given color and position to the instantiated object whilst also making the piecetype knight  
 
     {
 
@@ -377,7 +377,7 @@ public class Bishop : IPiece //Concrete Bishop class which defines everything ab
 
     public (int row, int column) Position { get; set; } //The position of the knight in tuple format  
 
-    public Color Color { get; set; } //The colour of the Bishop  
+    public itemColor Color { get; set; } //The colour of the Bishop  
 
     public PieceTypes PieceType { get; set; } //piecetype  
 
@@ -385,7 +385,7 @@ public class Bishop : IPiece //Concrete Bishop class which defines everything ab
 
 
 
-    public Bishop(Color _Color, (int row, int column) _Position) //constructor to set the properties to the given and required values  
+    public Bishop(itemColor _Color, (int row, int column) _Position) //constructor to set the properties to the given and required values  
 
     {
 
@@ -446,7 +446,7 @@ public class Rook : IPiece //Concrete Rook class which defines everything about 
 
 {
 
-    public Color Color { get; set; }  //The colour of the Rook  
+    public itemColor Color { get; set; }  //The colour of the Rook  
 
     public PieceTypes PieceType { get; set; } //The PieceType of the Rook  
 
@@ -456,7 +456,7 @@ public class Rook : IPiece //Concrete Rook class which defines everything about 
 
 
 
-    public Rook(Color _Color, (int row, int column) _Position) //constructor to set the properties to the given and required values  
+    public Rook(itemColor _Color, (int row, int column) _Position) //constructor to set the properties to the given and required values  
 
     {
 
@@ -513,7 +513,7 @@ public class King : IPiece //Concrete King class which defines everything about 
 
     public (int row, int column) Position { get; set; } //The position of the King in tuple format  
 
-    public Color Color { get; set; } //The colour of the King  
+    public itemColor Color { get; set; } //The colour of the King  
 
     public PieceTypes PieceType { get; set; } //PieceType, self explanatory used for checks later on  
 
@@ -521,7 +521,7 @@ public class King : IPiece //Concrete King class which defines everything about 
 
 
 
-    public King(Color _Color, (int row, int column) _Position) //constructor to set the properties to the given and required values  
+    public King(itemColor _Color, (int row, int column) _Position) //constructor to set the properties to the given and required values  
 
     {
 
@@ -580,7 +580,7 @@ public class Pawn : IPiece //Concrete Pawn class which defines everything about 
 
     public (int row, int column) Position { get; set; } //The position of the Pawn in tuple format  
 
-    public Color Color { get; set; } //The colour of the Pawn  
+    public itemColor Color { get; set; } //The colour of the Pawn  
 
     public PieceTypes PieceType { get; set; } //PieceType, self explanatory used for checks later on  
 
@@ -592,7 +592,7 @@ public class Pawn : IPiece //Concrete Pawn class which defines everything about 
 
 
 
-    public Pawn(Color _Color, (int row, int column) _Position) //constructor to set the properties to the given and required values  
+    public Pawn(itemColor _Color, (int row, int column) _Position) //constructor to set the properties to the given and required values  
 
     {
 
@@ -645,7 +645,7 @@ public class Queen : IPiece //Concrete Queen class which defines everything abou
 
     public (int row, int column) Position { get; set; } //The position of the Queen in tuple format  
 
-    public Color Color { get; set; }//The colour of the Queen  
+    public itemColor Color { get; set; }//The colour of the Queen  
 
     public PieceTypes PieceType { get; set; }//PieceType, self explanatory used for checks later on  
 
@@ -653,7 +653,7 @@ public class Queen : IPiece //Concrete Queen class which defines everything abou
 
 
 
-    public Queen(Color color, (int row, int column) position) //constructor to set the properties to the given and required values  
+    public Queen(itemColor color, (int row, int column) position) //constructor to set the properties to the given and required values  
 
     {
 
@@ -766,7 +766,7 @@ public class GameState
 
             (int row, int column) signVector = ((destination.row - piece.Position.row), (destination.column - piece.Position.column)); //Calculate the difference between destination and current position and store it in a variable 
 
-            if (piece.Color == Color.white) //check if the pawn is white 
+            if (piece.Color == itemColor.white) //check if the pawn is white 
 
             {
 
@@ -782,9 +782,9 @@ public class GameState
 
                         gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
 
-                        piece.Position = destination; //set the piece position to the destination 
-
                         Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+                        
+                        piece.Position = destination; //set the piece position to the destination 
 
                         Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
 
@@ -875,10 +875,10 @@ public class GameState
                     {
 
                         gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
-
-                        piece.Position = destination; //set the piece position to the destination 
-
+                        
                         Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+                        
+                        piece.Position = destination; //set the piece position to the destination               
 
                         Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
 
@@ -1018,7 +1018,7 @@ public class GameState
 
             
 
-                    if (moveSuccess == false)
+                   /* if (moveSuccess == false)
 
         {
 
@@ -1032,7 +1032,7 @@ public class GameState
 
             Console.WriteLine("The move has succeded");
 
-        }
+        }*/
 
 
 
@@ -1100,7 +1100,7 @@ public class GameState
 
                 }
 
-                if ((row == 0 && column == 1) || (row == 0 && column == 6))
+                if ((row == 7 && column == 1) || (row == 7 && column == 6))
 
                 {
 
@@ -1110,11 +1110,11 @@ public class GameState
 
                 }
 
-                if ((row == 7 && column == 1) || (row == 7 && column == 6))
+                if ((row == 0 && column == 1) || (row == 0 && column == 6))
 
                 {
 
-                    Pieces[row][column] = whitePieceFactory.CreateKnight((row, column));// black knight  
+                    Pieces[row][column] = blackPieceFactory.CreateKnight((row, column));// black knight  
 
                     gameBoard[row, column].IsOccupied = true;
 
@@ -1212,7 +1212,7 @@ public class GameState
 
                     {
 
-                        gameBoard[row, column].tileColor = Color.white;
+                        gameBoard[row, column].tileColor = itemColor.white;
 
                         gameBoard[row, column].IsOccupied = false;
 
@@ -1224,7 +1224,7 @@ public class GameState
 
                     {
 
-                        gameBoard[row, column].tileColor = Color.black;
+                        gameBoard[row, column].tileColor = itemColor.black;
 
                         gameBoard[row, column].IsOccupied = false;
 
@@ -1250,7 +1250,7 @@ public class GameState
 
                     {
 
-                        gameBoard[row, column].tileColor = Color.black;
+                        gameBoard[row, column].tileColor = itemColor.black;
 
                         gameBoard[row, column].IsOccupied = false;
 
@@ -1262,7 +1262,7 @@ public class GameState
 
                     {
 
-                        gameBoard[row, column].tileColor = Color.white;
+                        gameBoard[row, column].tileColor = itemColor.white;
 
                         gameBoard[row, column].IsOccupied = false;
 
