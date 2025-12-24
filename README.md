@@ -1,0 +1,1 @@
+Successsfully connected all parts of the game logic to GUI and pieces can now be moved via dragging, there is also an intermidiary screen between the start screen and the game window and the pieces and board displays.
