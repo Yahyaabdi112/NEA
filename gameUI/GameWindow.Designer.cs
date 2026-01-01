@@ -31,6 +31,8 @@
             btnquit = new Button();
             label1 = new Label();
             label2 = new Label();
+            plr2time = new Label();
+            plr1time = new Label();
             SuspendLayout();
             // 
             // btnquit
@@ -69,12 +71,36 @@
             label2.TabIndex = 4;
             label2.Text = "plr2";
             // 
+            // plr2time
+            // 
+            plr2time.AutoSize = true;
+            plr2time.BackColor = Color.Snow;
+            plr2time.Font = new Font("Arial Rounded MT Bold", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            plr2time.Location = new Point(644, 43);
+            plr2time.Name = "plr2time";
+            plr2time.Size = new Size(86, 22);
+            plr2time.TabIndex = 5;
+            plr2time.Text = "plr2time";
+            // 
+            // plr1time
+            // 
+            plr1time.AutoSize = true;
+            plr1time.BackColor = Color.Snow;
+            plr1time.Font = new Font("Arial Rounded MT Bold", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            plr1time.Location = new Point(644, 446);
+            plr1time.Name = "plr1time";
+            plr1time.Size = new Size(86, 22);
+            plr1time.TabIndex = 6;
+            plr1time.Text = "plr1time";
+            // 
             // GameWindow
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.SaddleBrown;
             ClientSize = new Size(903, 528);
+            Controls.Add(plr1time);
+            Controls.Add(plr2time);
             Controls.Add(label2);
             Controls.Add(label1);
             Controls.Add(btnquit);
@@ -89,5 +115,7 @@
         private Button btnquit;
         private Label label1;
         private Label label2;
+        private Label plr2time;
+        private Label plr1time;
     }
 }

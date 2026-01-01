@@ -23,5 +23,10 @@ namespace gameUI
             this.Hide();
             gameWindow.Show();
         }
+
+        private void GameSettings_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

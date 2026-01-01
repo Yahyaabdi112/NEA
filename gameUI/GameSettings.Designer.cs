@@ -134,6 +134,7 @@
             Controls.Add(label1);
             Name = "GameSettings";
             Text = "GameSettings";
+            Load += GameSettings_Load;
             ((System.ComponentModel.ISupportInitialize)gameTime).EndInit();
             ResumeLayout(false);
             PerformLayout();

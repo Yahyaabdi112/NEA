@@ -3,8 +3,10 @@
 using System.Drawing;
 
 using System.Reflection.Metadata;
+using System.Diagnostics;
 
-GameState game = new GameState();
+TimeSpan t = new TimeSpan(3);
+GameState game = new GameState(t, "Yahya", "plr2");
 
 game.createBoard();
 
@@ -13,6 +15,16 @@ game.addPieces();
 Console.WriteLine("The game board and pieces are loaded into memory!");
 
 game.MakeMove(game.Pieces[7][1], (5, 0));
+game.MakeMove(game.Pieces[1][3], (2, 3));
+
+Console.WriteLine("Player 1:");
+Console.WriteLine(game.player1.timeRemaining);
+Console.WriteLine("Player 2:");
+Console.WriteLine(game.player2.timeRemaining);
+
+
+
+
 
 
 
@@ -44,6 +56,13 @@ public enum itemColor //The different possible piece colours. With this we can s
 
 }
 
+public enum EndCondition //the different reasons why the game could end
+{ 
+    Checkmate,
+    Stalemate,
+    Timeout,
+    Resignation
+}
 public interface IPiece //The basis for each piece in the project. Its used as a contract so each direct piece class knows it must require these things. Used so that we dont directly create objects of pieces in classes later on when we want to add functionality.  
 
 {
@@ -85,6 +104,23 @@ public class Tile : ITile
     public itemColor tileColor { get; set; }
 
 
+}
+
+public struct Player
+{
+    public IEnumerable<IPiece>? takenPieces;
+    public itemColor color;
+    public string name;
+    public TimeSpan timeRemaining;
+    public bool isThisPlayerMove = false;
+    public bool playerTimeout = false; //check if a player has ran out of time
+
+    public Player(itemColor color, string name, TimeSpan initialTime)
+    {
+        this.color = color;
+        this.name = name;
+        this.timeRemaining = initialTime;
+    }
 }
 
 public interface IPieceFactory //This is an interface designed to be inherited by direct piece factory classes. It follows the abstract factory design pattern.Its role is to make sure that each piece factory contains all the correct properties, fields and methods.  
@@ -421,11 +457,11 @@ public class Bishop : IPiece //Concrete Bishop class which defines everything ab
 
         {
 
-            /*for (int i = 1; i < 8; i++) //For each of the unit vectors multiply them by 7 as the bishop can take any position on the board at these unit vectors  
+            for (int i = 1; i < 8; i++) //For each of the unit vectors multiply them by 7 as the bishop can take any position on the board at these unit vectors  
 
             {
 
-                /*(int row, int column) possiblePositionsAlongDirection; //create a temp varaible to represent every move in the given direction  
+                (int row, int column) possiblePositionsAlongDirection; //create a temp varaible to represent every move in the given direction  
 
                 possiblePositionsAlongDirection = ((move.row * i), (move.column * i)); //multiply the unit vector by i to give each position on the board along the unit vector  
 
@@ -433,7 +469,7 @@ public class Bishop : IPiece //Concrete Bishop class which defines everything ab
 
                 
 
-            }*/
+            }
             yield return move;
         }
 
@@ -720,15 +756,27 @@ public class GameState
 
     public List<List<IPiece>> Pieces = new List<List<IPiece>>(); //Used to store the pieces, unique pieces handle specifics like location and type. Is given piece objects in addpieces class. It is a 2D list and works by being a list of type list; the inner list is of type IPiece 
 
-    public string? currentPlayer; //Stores the current player  
+    public EndCondition endCondition; //used to track the reason for the game ending
+
+    public bool isGameEnd = false; //used to track if the game has ended
+
+    public Player Winner; //Used to identify the winner
+
+    public Player currentPlayer; //Stores the current player  
+
+    public itemColor playerTurn = itemColor.white; //variable which gives the color of the current player's turn
+
+    public int playerTurnCounter = 0; //variable which is used to calculate the current player's turn
+
+    public Player player1; //white
+    public Player player2; //black
+
+    public System.Timers.Timer timer;
 
 
 
 
-
-
-
-    public GameState() //Constructor  
+    public GameState(TimeSpan gameTime, string player1Name,string player2Name) //Constructor  
 
     {
 
@@ -745,294 +793,341 @@ public class GameState
             Pieces.Add(row); //for each of these 8 outer iterations, add the list created as an element of the Pieces list
         }
 
+       
 
+
+        player1 = new Player(itemColor.white, player1Name, gameTime);
+        player1.timeRemaining = gameTime; 
+        player2 = new Player(itemColor.black, player2Name, gameTime);
+        player2.timeRemaining = gameTime;
+
+        timer = new System.Timers.Timer();
+        timer.Interval = 1000; //run the timer tick event once every second 
+        timer.Elapsed += timer_Tick;
+
+        timer.Start();
     }
 
+    
 
 
     public void MakeMove(IPiece piece, (int row, int column) destination) //Move making class  
 
     {
-
+        
+        
         bool moveSuccess = false;
 
         //this class needs to use the piece  
 
         var possibleMoves = piece.Moves();
 
-        if (piece.PieceType == PieceTypes.pawn) //Check for if the piece is a pawn 
+        
 
+        if (playerTurnCounter % 2 == 0) //if the counter is even iits whites turn - 0 is the first psoitive even number so white always goes first
         {
+            playerTurn = itemColor.white;
+                              
+        }
+        else //if the counter is odd its blacks turn - odd numbers always come after an even number
+        {
+            playerTurn = itemColor.black;
 
-            (int row, int column) signVector = ((destination.row - piece.Position.row), (destination.column - piece.Position.column)); //Calculate the difference between destination and current position and store it in a variable 
-
-            if (piece.Color == itemColor.white) //check if the pawn is white 
-
-            {
-
-                if (signVector.row == -1 && signVector.column == 0) //check if the difference for row is -1 (the expected value for white pawns) and the column difference is zero meaning the pawn is moving one square in front of itself 
-
-                {
-
-
-
-                    if (gameBoard[destination.row, destination.column].IsOccupied == false) //check that tile the pawn is moving to is not occupied 
-
-                    {
-
-                        gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
-
-                        Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
-                        
-                        piece.Position = destination; //set the piece position to the destination 
-
-                        Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
-
-                        moveSuccess = true; //set move success flag to true 
-
-                        piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
-
-                        gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
-
-                    }
-
-                    else //if there is a piece occupying the destiantion tile 
-
-                    {
-
-                        moveSuccess = false; //set move success to false - dont allow the move 
-
-                    }
-
-
-
-
-
-                }
-
-                else if (signVector.row == -2 && signVector.column == 0) //check for if the white pawn is trying to move 2 squares ahead (no difference in column as pawns cant move horizontally) 
-
-                {
-
-                    if (gameBoard[destination.row, destination.column].IsOccupied == false && gameBoard[destination.row + 1, destination.column].IsOccupied == false) //check the tile in front of the pawn (behind the destination tile) and the destination tile are both unoccupied 
-
-                    {
-
-                        if (piece.hasMoved == false) //check that the pawn has not moved before because the pawn can only move 2 squares on its first move 
-
-                        {
-
-                            gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
-
-                            moveSuccess = true; //set move success flag to true 
-
-                            Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
-
-                            Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
-
-                            piece.Position = destination; //set the piece position to the destination 
-
-                            piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
-
-                            gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
-
-                        }
-
-                    }
-
-                    else //if the destination tile or the tile in front of the pawn is occupied dont allow the move 
-
-                    {
-
-                        moveSuccess = false;
-
-                    }
-
-                }
-
-                else // if the pawn is trying to move in any other way dont allow the pawn to take that move 
-
-                {
-
-                    moveSuccess = false;
-
-                }
-
-            }
-
-            else //if the pawn is black 
-
-            {
-
-
-
-                if (signVector.row == 1 && signVector.column == 0) //check if the difference for row is 1 (the expected value for black pawns) and the column difference is zero meaning the pawn is moving one square in front of itself 
-
-                {
-
-                    if (gameBoard[destination.row, destination.column].IsOccupied == false) //check that tile the pawn is moving to is not occupied 
-
-                    {
-
-                        gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
-                        
-                        Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
-                        
-                        piece.Position = destination; //set the piece position to the destination               
-
-                        Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
-
-                        moveSuccess = true; //set move success flag to true 
-
-                        piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
-
-                        gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
-
-                    }
-
-                }
-
-                else if (signVector.row == 2 && signVector.column == 0) //check for if the black pawn is trying to move 2 squares ahead (no difference in column as pawns cant move horizontally) 
-
-                {
-
-                    if (gameBoard[destination.row, destination.column].IsOccupied == false && gameBoard[destination.row - 1, destination.column].IsOccupied == false) //check the tile in front of the pawn (behind the destination tile) and the destination tile are both unoccupied 
-
-                    {
-
-                        if (piece.hasMoved == false) //check that the pawn has not moved before because the pawn can only move 2 squares on its first move 
-
-                        {
-
-                            gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
-
-                            piece.Position = destination; //set the piece position to the destination 
-
-                            Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
-
-                            Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
-
-                            moveSuccess = true; //set move success flag to true 
-
-                            piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
-
-                            gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
-
-                        }
-
-                    }
-
-                    else //if the destination tile or the tile in front of the pawn is occupied dont allow the move 
-
-                    {
-
-                        moveSuccess = false;
-
-                    }
-
-                }
-
-                else // if the pawn is trying to move in any other way dont allow the pawn to take that move 
-
-                {
-
-                    moveSuccess = false;
-
-                }
-
-            }
 
         }
-        else if (piece.PieceType == PieceTypes.bishop || piece.PieceType == PieceTypes.queen || piece.PieceType == PieceTypes.rook || piece.PieceType == PieceTypes.king)
+
+
+
+        if (piece.Color == playerTurn) //check if the piece being moved belongs to the player whos turn it currently is
         {
-            bool isDestinationThisMove = false; //flag to check if the current offset in the iteration is the same offset the destination lies in
-            foreach (var move in possibleMoves) //loop through every offset returned by the pieces moves function
+            if (piece.Color == itemColor.white)
             {
-                int index = 0; //a placeholder variable to give the multiplier needed to be placed on the offset to get the destination position
-                for (int i = 1; i < 9; i++) //loop 1 thorugh 8 and multiply the offset by the i variable
+                currentPlayer = player1;
+            }
+            else
+            {
+                currentPlayer = player2;
+            }
+
+            if ((player1.playerTimeout != true) && (player2.playerTimeout != true)) //check the player hasn't timed out 
+            {
+                if (piece.PieceType == PieceTypes.pawn) //Check for if the piece is a pawn 
+
                 {
 
-                    if (((destination.row - piece.Position.row) == (move.row * i)) && (destination.column - piece.Position.column) == (move.column * i)) //check if the displacement vector of the position to destination matches the pieces offset multiplied by some constant
+                    (int row, int column) signVector = ((destination.row - piece.Position.row), (destination.column - piece.Position.column)); //Calculate the difference between destination and current position and store it in a variable 
+
+                    if (piece.Color == itemColor.white) //check if the pawn is white 
+
                     {
-                        index = i; //if the displacement vector matches the current offset multiplied by some number update the index variable to store the number/multiplier
-                        isDestinationThisMove = true; //update the flag to say this offset is the one which contains the destination position
+
+                        if (signVector.row == -1 && signVector.column == 0) //check if the difference for row is -1 (the expected value for white pawns) and the column difference is zero meaning the pawn is moving one square in front of itself 
+
+                        {
+
+
+
+                            if (gameBoard[destination.row, destination.column].IsOccupied == false) //check that tile the pawn is moving to is not occupied 
+
+                            {
+
+                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
+
+                                Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+
+                                piece.Position = destination; //set the piece position to the destination 
+
+                                Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
+
+                                moveSuccess = true; //set move success flag to true 
+
+                                piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
+
+                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
+
+                            }
+
+                            else //if there is a piece occupying the destiantion tile 
+
+                            {
+
+                                moveSuccess = false; //set move success to false - dont allow the move 
+
+                            }
+
+
+
+
+
+                        }
+
+                        else if (signVector.row == -2 && signVector.column == 0) //check for if the white pawn is trying to move 2 squares ahead (no difference in column as pawns cant move horizontally) 
+
+                        {
+
+                            if (gameBoard[destination.row, destination.column].IsOccupied == false && gameBoard[destination.row + 1, destination.column].IsOccupied == false) //check the tile in front of the pawn (behind the destination tile) and the destination tile are both unoccupied 
+
+                            {
+
+                                if (piece.hasMoved == false) //check that the pawn has not moved before because the pawn can only move 2 squares on its first move 
+
+                                {
+
+                                    gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
+
+                                    moveSuccess = true; //set move success flag to true 
+
+                                    Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+
+                                    Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
+
+                                    piece.Position = destination; //set the piece position to the destination 
+
+                                    piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
+
+                                    gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
+
+                                }
+
+                            }
+
+                            else //if the destination tile or the tile in front of the pawn is occupied dont allow the move 
+
+                            {
+
+                                moveSuccess = false;
+
+                            }
+
+                        }
+
+                        else // if the pawn is trying to move in any other way dont allow the pawn to take that move 
+
+                        {
+
+                            moveSuccess = false;
+
+                        }
+
+                    }
+
+                    else //if the pawn is black 
+
+                    {
+
+
+
+                        if (signVector.row == 1 && signVector.column == 0) //check if the difference for row is 1 (the expected value for black pawns) and the column difference is zero meaning the pawn is moving one square in front of itself 
+
+                        {
+
+                            if (gameBoard[destination.row, destination.column].IsOccupied == false) //check that tile the pawn is moving to is not occupied 
+
+                            {
+
+                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
+
+                                Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+
+                                piece.Position = destination; //set the piece position to the destination               
+
+                                Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
+
+                                moveSuccess = true; //set move success flag to true 
+
+                                piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
+
+                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
+
+                            }
+
+                        }
+
+                        else if (signVector.row == 2 && signVector.column == 0) //check for if the black pawn is trying to move 2 squares ahead (no difference in column as pawns cant move horizontally) 
+
+                        {
+
+                            if (gameBoard[destination.row, destination.column].IsOccupied == false && gameBoard[destination.row - 1, destination.column].IsOccupied == false) //check the tile in front of the pawn (behind the destination tile) and the destination tile are both unoccupied 
+
+                            {
+
+                                if (piece.hasMoved == false) //check that the pawn has not moved before because the pawn can only move 2 squares on its first move 
+
+                                {
+
+                                    gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
+
+                                    piece.Position = destination; //set the piece position to the destination 
+
+                                    Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+
+                                    Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
+
+                                    moveSuccess = true; //set move success flag to true 
+
+                                    piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
+
+                                    gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
+
+                                }
+
+                            }
+
+                            else //if the destination tile or the tile in front of the pawn is occupied dont allow the move 
+
+                            {
+
+                                moveSuccess = false;
+
+                            }
+
+                        }
+
+                        else // if the pawn is trying to move in any other way dont allow the pawn to take that move 
+
+                        {
+
+                            moveSuccess = false;
+
+                        }
+
+                    }
+
+                }
+                else if (piece.PieceType == PieceTypes.bishop || piece.PieceType == PieceTypes.queen || piece.PieceType == PieceTypes.rook || piece.PieceType == PieceTypes.king)
+                {
+                    bool isDestinationThisMove = false; //flag to check if the current offset in the iteration is the same offset the destination lies in
+                    foreach (var move in possibleMoves) //loop through every offset returned by the pieces moves function
+                    {
+                        int index = 0; //a placeholder variable to give the multiplier needed to be placed on the offset to get the destination position
+                        for (int i = 1; i < 9; i++) //loop 1 thorugh 8 and multiply the offset by the i variable
+                        {
+
+                            if (((destination.row - piece.Position.row) == (move.row * i)) && (destination.column - piece.Position.column) == (move.column * i)) //check if the displacement vector of the position to destination matches the pieces offset multiplied by some constant
+                            {
+                                index = i; //if the displacement vector matches the current offset multiplied by some number update the index variable to store the number/multiplier
+                                isDestinationThisMove = true; //update the flag to say this offset is the one which contains the destination position
+                            }
+                        }
+
+                        if (isDestinationThisMove == true) //if the destination position is contained in this current offset
+                        {
+                            //while (piece.Position.row <= destination.row && piece.Position.column <= destination.column)
+                            {
+                                for (int i = 1; i <= index; i++) //loop through from 1 to the multiplier (this is to check the tiles in between the destination tile and piece position tile)
+                                {
+                                    if (gameBoard[piece.Position.row + (move.row * i), piece.Position.column + (move.column * i)].IsOccupied == false)// multiply the offset by i then add this to the pieces current position adn check if any tiles along this path are occupied
+                                    {
+                                        gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the index of the original tile of the piece in the gameboard array to not occuppied as the piece is moving from this tile 
+                                        Pieces[piece.Position.row][piece.Position.column] = null; //set the index of the original position of the piece in the pieces list to null as the piece is being moved to a different index
+                                        piece.Position = destination; //set the pieces position to the destination position
+                                        Pieces[destination.row][destination.column] = piece;//set the index of the pieces array at the new position of the piece to hold the piece
+                                        gameBoard[destination.row, destination.column].IsOccupied = true; //set the tile at the index of the new position of the piece in the gameboard array to be occupied
+                                        piece.hasMoved = true; //set the has moved property of the piece to true
+                                        moveSuccess = true; //if none tiles are occuppied then allow the piece to move and set the move success flag to true
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        moveSuccess = false; //if there are occuppied tiles then dont allow the piece to move
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-
-                if (isDestinationThisMove == true) //if the destination position is contained in this current offset
+                else //The final piece type is the knight which has a unique movement system
                 {
-                    //while (piece.Position.row <= destination.row && piece.Position.column <= destination.column)
+                    foreach (var move in possibleMoves)
                     {
-                        for (int i = 1; i <= index; i++) //loop through from 1 to the multiplier (this is to check the tiles in between the destination tile and piece position tile)
+                        bool isDestinationThisMove = false; //flag to check if the current offset in the iteration is the same offset the destination lies in
+                        if ((destination.row - piece.Position.row) == move.row && (destination.column - piece.Position.column) == move.column)
                         {
-                            if (gameBoard[piece.Position.row + (move.row * i), piece.Position.column + (move.column * i)].IsOccupied == false)// multiply the offset by i then add this to the pieces current position adn check if any tiles along this path are occupied
+                            isDestinationThisMove = true; //if the displacement vector matches the current offset then set the flag to true
+                        }
+
+                        if (isDestinationThisMove)
+                        {
+                            if (gameBoard[destination.row, destination.column].IsOccupied == false)
                             {
+                                moveSuccess = true; //if the destination tile is not occupied allow the move
                                 gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the index of the original tile of the piece in the gameboard array to not occuppied as the piece is moving from this tile 
                                 Pieces[piece.Position.row][piece.Position.column] = null; //set the index of the original position of the piece in the pieces list to null as the piece is being moved to a different index
                                 piece.Position = destination; //set the pieces position to the destination position
                                 Pieces[destination.row][destination.column] = piece;//set the index of the pieces array at the new position of the piece to hold the piece
                                 gameBoard[destination.row, destination.column].IsOccupied = true; //set the tile at the index of the new position of the piece in the gameboard array to be occupied
                                 piece.hasMoved = true; //set the has moved property of the piece to true
-                                moveSuccess = true; //if none tiles are occuppied then allow the piece to move and set the move success flag to true
-                                break;
                             }
                             else
                             {
-                                moveSuccess = false; //if there are occuppied tiles then dont allow the piece to move
+                                moveSuccess = false; //if the destination tile is occupied dont allow the move
                             }
                         }
                     }
                 }
-            }
-        }
-        else //The final piece type is the knight which has a unique movement system
-        {
-            foreach (var move in possibleMoves)
-            {
-                bool isDestinationThisMove = false; //flag to check if the current offset in the iteration is the same offset the destination lies in
-                if ((destination.row - piece.Position.row) == move.row && (destination.column - piece.Position.column) == move.column)
-                { 
-                    isDestinationThisMove = true; //if the displacement vector matches the current offset then set the flag to true
-                }
-
-                if (isDestinationThisMove)
-                {
-                    if (gameBoard[destination.row, destination.column].IsOccupied == false)
-                    {
-                        moveSuccess = true; //if the destination tile is not occupied allow the move
-                        gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the index of the original tile of the piece in the gameboard array to not occuppied as the piece is moving from this tile 
-                        Pieces[piece.Position.row][piece.Position.column] = null; //set the index of the original position of the piece in the pieces list to null as the piece is being moved to a different index
-                        piece.Position = destination; //set the pieces position to the destination position
-                        Pieces[destination.row][destination.column] = piece;//set the index of the pieces array at the new position of the piece to hold the piece
-                        gameBoard[destination.row, destination.column].IsOccupied = true; //set the tile at the index of the new position of the piece in the gameboard array to be occupied
-                        piece.hasMoved = true; //set the has moved property of the piece to true
-                    }
-                    else
-                    {
-                        moveSuccess = false; //if the destination tile is occupied dont allow the move
-                    }
-                }
-            }
-        }
-
-
+                playerTurnCounter += 1;//move the playerTurnCounter up by one to show the calculation that its the next players turn
             
-
-                   /* if (moveSuccess == false)
-
-        {
-
-            Console.WriteLine("The move has failed");
-
+            }
         }
+     
 
-        else
 
-        {
 
-            Console.WriteLine("The move has succeded");
+            /*if (moveSuccess == false)
 
-        }*/
+                {
+
+                    Console.WriteLine("The move has failed");
+
+                }
+
+                else
+
+                    {
+
+                    Console.WriteLine("The move has succeded");
+
+            }*/
 
 
 
@@ -1288,7 +1383,58 @@ public class GameState
 
     }
 
+    private void timer_Tick(object sender, EventArgs e)
+    {
+        if (playerTurnCounter % 2 == 0) //if the counter is even its whites turn - 0 is the first psoitive even number so white always goes first
+        {
+            playerTurn = itemColor.white;
+        }
+        else //if the counter is odd its blacks turn - odd numbers always come after an even number
+        {
+            playerTurn = itemColor.black;
+        }
+
+            TimeSpan oneSecond = new TimeSpan(0, 0, 1); //variable just used so we can subtract a second
+            TimeSpan zeroSeconds = new TimeSpan(0, 0, 0); //variable used so we can convert 0 minutes and seconds into a time span
+
+        if ((player1.timeRemaining > zeroSeconds) && (player2.timeRemaining > zeroSeconds)) //check if each player has above 0 seconds left if so continue as normal and subtract a second each
+        {
+            if (playerTurn == itemColor.white)
+            {
+                player1.timeRemaining = player1.timeRemaining.Subtract(oneSecond);
+            }
+            else
+            {
+                player2.timeRemaining = player2.timeRemaining.Subtract(oneSecond);
+            }
+        }
+        else //if not whoever ran out of time set there timeout to true
+        {
+            if (player1.timeRemaining <= zeroSeconds)
+            {
+                player1.playerTimeout = true; //set this player to have timed out
+                Winner = player2; //set the winner to the other player (black)
+                endCondition = EndCondition.Timeout; //set the end condition to time out
+                isGameEnd = true; //set the game to have ended
+            }
+            else if (player2.timeRemaining <= zeroSeconds)
+            {
+                player2.playerTimeout = true;
+                Winner = player1; //set the winner to the other player (white)
+                endCondition = EndCondition.Timeout; //set the end condition to time out
+                isGameEnd = true; //set the game to have ended
+            }
+        }
+        
+    }
+
 
 }
+
+
+
+
+
+
 
 
