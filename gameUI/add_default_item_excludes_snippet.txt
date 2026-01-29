@@ -1,0 +1,1 @@
+﻿<DefaultItemExcludes>;..\Chess Logic 15-12-2025\obj\**</DefaultItemExcludes>
