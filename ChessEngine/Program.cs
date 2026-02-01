@@ -23,7 +23,9 @@ Console.WriteLine(game.player1.timeRemaining);
 Console.WriteLine("Player 2:");
 Console.WriteLine(game.player2.timeRemaining);*/
 
-game.MakeMove(game.Pieces[7][3], (5, 5));
+/*game.MakeMove(game.Pieces[6][4], (4, 4), false);
+game.MakeMove(game.Pieces[1][5], (3, 5), false);
+game.MakeMove(game.Pieces[7][3], (3, 7), false);*/
 
 
 
@@ -124,7 +126,7 @@ public class Tile : ITile
     public bool isLightUp { get; set; }
 }
 
-public struct Player
+public class Player
 {
     public List<IPiece> takenPieces;
     public itemColor color;
@@ -132,6 +134,8 @@ public struct Player
     public TimeSpan timeRemaining;
     public bool isThisPlayerMove = false;
     public bool playerTimeout = false; //check if a player has ran out of time
+    public bool Checked = false; //used to signal if the player is in check
+    public IPiece playerKing; //used to keep track of the players king
 
     public Player(itemColor color, string name, TimeSpan initialTime)
     {
@@ -706,7 +710,7 @@ public class Queen : IPiece //Concrete Queen class which defines everything abou
 
         var possibleMoves = new (int row, int column)[]{ //store each of these offsets in tuple form in an ienumerable  
  
-        (-1, 1), (-1, 0), (-1, -1),
+        (-1, -1), (-1, 0), (-1, 1),
 
         (0 ,-1), (1, -1), (1 ,0),
 
@@ -763,6 +767,18 @@ public class GameState
 
     public System.Timers.Timer timer;
 
+    
+    public bool isPlayerinCheck = false; //flag used to signal a player has been put into check
+    public bool isMoveEscapedCheck = false; //flag used to signal if a move would let a player escape check
+    public bool hasRecursiveCallHappened = false; //used to signal when a recursive call for the checking if a player can exit check has already happened - this stops infinite calls
+    bool debounce = false; //used as a debounce for when CheckForCheck runs to check if a move will still result in a player being in check
+
+
+    IPiece blacksKing; //these are used to store the white and black king - used for checking for check
+    IPiece whitesKing;
+
+    bool arePiecesLoaded = false; //used as a flag so that the check for check method doesn't run before pieces are loaded
+
 
 
 
@@ -801,20 +817,17 @@ public class GameState
 
 
 
-    public void MakeMove(IPiece piece, (int row, int column) destination) //Move making class  
+    public void MakeMove(IPiece piece, (int row, int column) destination, bool isThisMethodCheckingForCheck, bool isThisMethodCheckingForEscapingCheck) //Move making method 
 
     {
-
-
-        bool moveSuccess = false;
-
-        //this class needs to use the piece  
-
+        bool moveSuccess = false; //used to determine if a move was successful
+        bool isCapturingPiece = false; //this is so we know if we should run the logic which just moves a piece or if we should run the logic which moves and captures a piece
+        bool willThisMoveEscapeCheck = false; //used if the method was called to check if moving a king would take a player out of check
+        
+       
         var possibleMoves = piece.Moves();
 
-
-
-        if (playerTurnCounter % 2 == 0) //if the counter is even iits whites turn - 0 is the first psoitive even number so white always goes first
+        if (playerTurnCounter % 2 == 0) //if the counter is even its whites turn - 0 is the first psoitive even number so white always goes first
         {
             playerTurn = itemColor.white;
 
@@ -826,391 +839,461 @@ public class GameState
 
         }
 
+        if (playerTurn == itemColor.white) //check if its whites turn
+        {
+            if (player1.Checked) //check if white is checked
+            {
+                if (piece.PieceType == PieceTypes.king) //check if white is trying to move its king - a player should only be allowed to move their king if their in check no other pieces
+                {
+                    if (!hasRecursiveCallHappened) //When the check for check function below runs it calls make move - this prevents make move from calling check for check again and causing an infinite loop
+                    {
+                        hasRecursiveCallHappened = true; //set the flag to be true so the check for check function cant be called multiple times in one recursive call
+                        //debounce = true;
+                        if (checkForCheck((destination.row, destination.column), player1, true)) //this function would return true if a move would take a checked white king out of check
+                        {
+                            willThisMoveEscapeCheck = true; //if the move will allow the piece to escape check set this flag to true
+                        }
+                        else
+                        {
+                            
+                            debounce = true; //if the move wont allow the white king to escape check set debounce to true 
+                        }
+                    }
+                }
+            }
+        }
+        else //if its not whites turn its blacks turn
+        {
+            if (player2.Checked) //check if black is checked
+            {
+                if (piece.PieceType == PieceTypes.king) //check if black is trying to move its king - a player should only be allowed to move their king if their in check no other pieces
+                {if (!hasRecursiveCallHappened) //When the check for check function below runs it calls make move - this prevents make move from calling check for check again and causing an infinite loop
+                    {
+                        hasRecursiveCallHappened = true; //set the flag to be true so the check for check function cant be called multiple times in one recursive call
+                        if (checkForCheck((destination.row, destination.column), player2, true)) //this function would return true if a move would take a checked black king out of check
+                        {
+                            willThisMoveEscapeCheck = true; //if the move will allow the piece to escape check set this flag to true
+                        } 
+                        else
+                        {
+                            debounce = true; //if the move wont allow the black king to escape check set debounce to true
+                        }
+                    }
+                }
+            }
+        }
 
 
-        if (piece.Color == playerTurn) //check if the piece being moved belongs to the player whos turn it currently is
+        if (piece.Color == playerTurn || isThisMethodCheckingForCheck == true) //check if the piece being moved belongs to the player whos turn it currently is but ignor this rule if we're only running this to check if a piece is in check
         {
             if (piece.Color == itemColor.white)
             {
                 currentPlayer = player1;
             }
-            else
+            else 
             {
                 currentPlayer = player2;
             }
+            
 
-            if ((player1.playerTimeout != true) && (player2.playerTimeout != true)) //check the player hasn't timed out 
+            if ((player1.playerTimeout != true) && (player2.playerTimeout != true)) //check a player hasn't timed out 
             {
-                if (piece.PieceType == PieceTypes.pawn) //Check for if the piece is a pawn 
-
+                if ((isThisMethodCheckingForCheck && isThisMethodCheckingForEscapingCheck) || !debounce) // (1) If the method was called to check if a piece can escape check then allow the move logic to progress (the parameters 'isThisMethodCheckingForCheck' and 'isThisMethodCheckingForEscapingCheck' would be true in that case)  (2) If the method was called for movement then the debounce variable will determine whether the mvoe would be allowed (in all cases the debounce variable is set to false, unless a checked king is trying to mvoe into a position which would keeep them in check - in that case debounce is set to true) 
                 {
-
-                    (int row, int column) signVector = ((destination.row - piece.Position.row), (destination.column - piece.Position.column)); //Calculate the difference between destination and current position and store it in a variable 
-
-                    if (piece.Color == itemColor.white) //check if the pawn is white 
+                    
+                    if (piece.PieceType == PieceTypes.pawn) //Check for if the piece is a pawn 
 
                     {
 
-                        if (signVector.row == -1 && signVector.column == 0) //check if the difference for row is -1 (the expected value for white pawns) and the column difference is zero meaning the pawn is moving one square in front of itself 
+                        (int row, int column) signVector = ((destination.row - piece.Position.row), (destination.column - piece.Position.column)); //Calculate the difference between destination and current position and store it in a variable 
+
+                        if (piece.Color == itemColor.white) //check if the pawn is white 
 
                         {
 
-
-
-                            if (gameBoard[destination.row, destination.column].IsOccupied == false) //check that tile the pawn is moving to is not occupied 
+                            if (signVector.row == -1 && signVector.column == 0) //check if the difference for row is -1 (the expected value for white pawns) and the column difference is zero meaning the pawn is moving one square in front of itself 
 
                             {
 
-                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
-
-                                Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
-
-                                piece.Position = destination; //set the piece position to the destination 
-
-                                Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
-
-                                moveSuccess = true; //set move success flag to true 
-
-                                piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
-
-                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
-
-                                hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move
-                            }
-
-                            else //if there is a piece occupying the destiantion tile 
-
-                            {
-
-                                moveSuccess = false; //set move success to false - dont allow the move 
-
-                            }
 
 
-
-
-
-                        }
-
-                        else if (signVector.row == -2 && signVector.column == 0) //check for if the white pawn is trying to move 2 squares ahead (no difference in column as pawns cant move horizontally) 
-
-                        {
-
-                            if (gameBoard[destination.row, destination.column].IsOccupied == false && gameBoard[destination.row + 1, destination.column].IsOccupied == false) //check the tile in front of the pawn (behind the destination tile) and the destination tile are both unoccupied 
-
-                            {
-
-                                if (piece.hasMoved == false) //check that the pawn has not moved before because the pawn can only move 2 squares on its first move 
+                                if (gameBoard[destination.row, destination.column].IsOccupied == false) //check that tile the pawn is moving to is not occupied 
 
                                 {
 
-                                    gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
 
                                     moveSuccess = true; //set move success flag to true 
 
-                                    Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+                                }
 
-                                    Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
+                                else //if there is a piece occupying the destiantion tile 
 
-                                    piece.Position = destination; //set the piece position to the destination 
+                                {
 
-                                    piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
+                                    moveSuccess = false; //set move success to false - dont allow the move 
 
-                                    gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
+                                }
 
-                                    hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move
+
+
+
+
+                            }
+
+                            else if (signVector.row == -2 && signVector.column == 0) //check for if the white pawn is trying to move 2 squares ahead (no difference in column as pawns cant move horizontally) 
+
+                            {
+
+                                if (gameBoard[destination.row, destination.column].IsOccupied == false && gameBoard[destination.row + 1, destination.column].IsOccupied == false) //check the tile in front of the pawn (behind the destination tile) and the destination tile are both unoccupied 
+
+                                {
+
+                                    if (piece.hasMoved == false) //check that the pawn has not moved before because the pawn can only move 2 squares on its first move 
+
+                                    {
+
+
+                                        moveSuccess = true; //set move success flag to true 
+
+
+
+                                    }
+
+                                }
+
+                                else //if the destination tile or the tile in front of the pawn is occupied dont allow the move 
+
+                                {
+
+                                    moveSuccess = false;
+
+                                }
+
+                            }
+                            else if (signVector.row == -1 && signVector.column == -1) //check if the white pawn is trying to move to the tile which is to its top left. This only works if there is a piece here as this move is for caputring pieces
+                            {
+                                if (gameBoard[destination.row, destination.column].IsOccupied == true)
+                                {
+                                    isCapturingPiece = true;
+                                    moveSuccess = true;
+                                }
+                                else //if there is no piece on the tile the white pawn is trying to capture a piece from
+                                {
+                                    moveSuccess = false;
+                                }
+                            }
+                            else if (signVector.row == -1 && signVector.column == 1) //check if the white pawn is trying to move to the tile which is to its top right. This only works if there is a piece here as this move is for caputring pieces 
+                            {
+                                if (gameBoard[destination.row, destination.column].IsOccupied == true)
+                                {
+                                    isCapturingPiece = true;
+                                    moveSuccess = true;
+                                }
+                                else //if there is no piece on the tile the white pawn is trying to capture a piece from
+                                {
+                                    moveSuccess = false;
+                                }
+                            }
+
+                            else // if the pawn is trying to move in any other way dont allow the pawn to take that move 
+
+                            {
+
+                                moveSuccess = false;
+
+                            }
+
+                        }
+
+                        else //if the pawn is black 
+
+                        {
+
+
+
+                            if (signVector.row == 1 && signVector.column == 0) //check if the difference for row is 1 (the expected value for black pawns) and the column difference is zero meaning the pawn is moving one square in front of itself 
+
+                            {
+
+                                if (gameBoard[destination.row, destination.column].IsOccupied == false) //check that tile the pawn is moving to is not occupied 
+
+                                {
+
+                                    moveSuccess = true; //set move success flag to true 
 
                                 }
 
                             }
 
-                            else //if the destination tile or the tile in front of the pawn is occupied dont allow the move 
+                            else if (signVector.row == 2 && signVector.column == 0) //check for if the black pawn is trying to move 2 squares ahead (no difference in column as pawns cant move horizontally) 
 
                             {
 
-                                moveSuccess = false;
-
-                            }
-
-                        }
-                        else if (signVector.row == -1 && signVector.column == -1) //check if the white pawn is trying to move to the tile which is to its top left. This only works if there is a piece here as this move is for caputring pieces
-                        {
-                            if (gameBoard[destination.row, destination.column].IsOccupied == true)
-                            {
-                                capturePiece(piece, Pieces[destination.row][destination.column]);
-                                moveSuccess = true;
-                            }
-                            else //if there is no piece on the tile the white pawn is trying to capture a piece from
-                            {
-                                moveSuccess = false;
-                            }
-                        }
-                        else if (signVector.row == -1 && signVector.column == 1) //check if the white pawn is trying to move to the tile which is to its top right. This only works if there is a piece here as this move is for caputring pieces 
-                        {
-                            if (gameBoard[destination.row, destination.column].IsOccupied == true)
-                            {
-                                capturePiece(piece, Pieces[destination.row][destination.column]);
-                                moveSuccess = true;
-                            }
-                            else //if there is no piece on the tile the white pawn is trying to capture a piece from
-                            {
-                                moveSuccess = false;
-                            }
-                        }
-
-                        else // if the pawn is trying to move in any other way dont allow the pawn to take that move 
-
-                        {
-
-                            moveSuccess = false;
-
-                        }
-
-                    }
-
-                    else //if the pawn is black 
-
-                    {
-
-
-
-                        if (signVector.row == 1 && signVector.column == 0) //check if the difference for row is 1 (the expected value for black pawns) and the column difference is zero meaning the pawn is moving one square in front of itself 
-
-                        {
-
-                            if (gameBoard[destination.row, destination.column].IsOccupied == false) //check that tile the pawn is moving to is not occupied 
-
-                            {
-
-                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
-
-                                Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
-
-                                piece.Position = destination; //set the piece position to the destination               
-
-                                Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
-
-                                moveSuccess = true; //set move success flag to true 
-
-                                piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
-
-                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
-
-                                hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move
-                            }
-
-                        }
-
-                        else if (signVector.row == 2 && signVector.column == 0) //check for if the black pawn is trying to move 2 squares ahead (no difference in column as pawns cant move horizontally) 
-
-                        {
-
-                            if (gameBoard[destination.row, destination.column].IsOccupied == false && gameBoard[destination.row - 1, destination.column].IsOccupied == false) //check the tile in front of the pawn (behind the destination tile) and the destination tile are both unoccupied 
-
-                            {
-
-                                if (piece.hasMoved == false) //check that the pawn has not moved before because the pawn can only move 2 squares on its first move 
+                                if (gameBoard[destination.row, destination.column].IsOccupied == false && gameBoard[destination.row - 1, destination.column].IsOccupied == false) //check the tile in front of the pawn (behind the destination tile) and the destination tile are both unoccupied 
 
                                 {
 
-                                    gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
+                                    if (piece.hasMoved == false) //check that the pawn has not moved before because the pawn can only move 2 squares on its first move 
 
-                                    Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+                                    {
 
-                                    piece.Position = destination; //set the piece position to the destination           
 
-                                    Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
+                                        moveSuccess = true; //set move success flag to true 
 
-                                    moveSuccess = true; //set move success flag to true 
+                                    }
 
-                                    piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
+                                }
 
-                                    gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
+                                else //if the destination tile or the tile in front of the pawn is occupied dont allow the move 
 
-                                    hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move
+                                {
+
+                                    moveSuccess = false;
+
                                 }
 
                             }
+                            else if (signVector.row == 1 && signVector.column == -1) //if the black pawn is trying to capture a piece to its bottom left. This only works if there is a piece here as this move is for capturing pieces
+                            {
+                                if (gameBoard[destination.row, destination.column].IsOccupied == true)
+                                {
+                                    isCapturingPiece = true;
+                                    moveSuccess = true;
+                                }
+                                else //if there is no piece on the tile the black pawn is trying to capture a piece from
+                                {
+                                    moveSuccess = false;
+                                }
+                            }
+                            else if (signVector.row == 1 && signVector.column == 1) //if the black pawn is trying to capture a piece to its bottom right. This only works if there is a piece here as this move is for caputring pieces
+                            {
+                                if (gameBoard[destination.row, destination.column].IsOccupied == true)
+                                {
+                                    isCapturingPiece = true;
+                                    moveSuccess = true;
+                                }
+                                else //if there is no piece on the tile the black pawn is trying to capture a piece from
+                                {
+                                    moveSuccess = false;
+                                }
+                            }
 
-                            else //if the destination tile or the tile in front of the pawn is occupied dont allow the move 
+                            else // if the pawn is trying to move in any other way dont allow the pawn to take that move 
 
                             {
 
                                 moveSuccess = false;
 
                             }
-
-                        }
-                        else if (signVector.row == 1 && signVector.column == -1) //if the black pawn is trying to capture a piece to its bottom left. This only works if there is a piece here as this move is for capturing pieces
-                        {
-                            if (gameBoard[destination.row, destination.column].IsOccupied == true)
-                            {
-                                capturePiece(piece, Pieces[destination.row][destination.column]);
-                                moveSuccess = true;
-                            }
-                            else //if there is no piece on the tile the black pawn is trying to capture a piece from
-                            {
-                                moveSuccess = false;
-                            }
-                        }
-                        else if (signVector.row == 1 && signVector.column == 1) //if the black pawn is trying to capture a piece to its bottom right. This only works if there is a piece here as this move is for caputring pieces
-                        {
-                            if (gameBoard[destination.row, destination.column].IsOccupied == true)
-                            {
-                                capturePiece(piece, Pieces[destination.row][destination.column]);
-                                moveSuccess = true;
-                            }
-                            else //if there is no piece on the tile the black pawn is trying to capture a piece from
-                            {
-                                moveSuccess = false;
-                            }
-                        }
-
-                        else // if the pawn is trying to move in any other way dont allow the pawn to take that move 
-
-                        {
-
-                            moveSuccess = false;
 
                         }
 
                     }
-
-                }
-                else if (piece.PieceType == PieceTypes.bishop || piece.PieceType == PieceTypes.queen || piece.PieceType == PieceTypes.rook || piece.PieceType == PieceTypes.king)
-                {
-                    bool isDestinationThisMove = false; //flag to check if the current offset in the iteration is the same offset the destination lies in
-                    foreach (var move in possibleMoves) //loop through every offset returned by the pieces moves function
+                    else if (piece.PieceType == PieceTypes.bishop || piece.PieceType == PieceTypes.queen || piece.PieceType == PieceTypes.rook || piece.PieceType == PieceTypes.king)
                     {
-                        int index = 0; //a placeholder variable to give the multiplier needed to be placed on the offset to get the destination position
-                        for (int i = 1; i < 9; i++) //loop 1 thorugh 8 and multiply the offset by the i variable
+                        bool isDestinationThisMove = false; //flag to check if the current offset in the iteration is the same offset the destination lies in **
+                        foreach (var move in possibleMoves) //loop through every offset returned by the pieces moves function
                         {
-
-                            if (((destination.row - piece.Position.row) == (move.row * i)) && (destination.column - piece.Position.column) == (move.column * i)) //check if the displacement vector of the position to destination matches the pieces offset multiplied by some constant
+                            int index = 0; //a placeholder variable to give the multiplier needed to be placed on the offset to get the destination position
+                            for (int i = 1; i < 9; i++) //loop 1 thorugh 8 and multiply the offset by the i variable
                             {
-                                index = i; //if the displacement vector matches the current offset multiplied by some number update the index variable to store the number/multiplier
-                                isDestinationThisMove = true; //update the flag to say this offset is the one which contains the destination position
+
+                                if (((destination.row - piece.Position.row) == (move.row * i)) && (destination.column - piece.Position.column) == (move.column * i)) //check if the displacement vector of the position to destination matches the pieces offset multiplied by some constant
+                                {
+                                    index = i; //if the displacement vector matches the current offset multiplied by some number update the index variable to store the number/multiplier
+                                    isDestinationThisMove = true; //update the flag to say this offset is the one which contains the destination position
+                                    break;
+
+
+                                }
+                            }
+
+                            if (isDestinationThisMove == true) //if the destination position is contained in this current offset
+                            {
+                                bool tileBlocked = false; //flag to check that a tile on the path from a piece position to its destination is not blocked
+                                                          //while (piece.Position.row <= destination.row && piece.Position.column <= destination.column)
+                                {
+                                    for (int i = 1; i <= index; i++) //loop through from 1 to the multiplier (this is to check the tiles in between the destination tile and piece position tile)
+                                    {
+                                        if (piece.PieceType == PieceTypes.king) //the king can only move one square in any direction, this avoids the king being allowed the same movement pattern as the queen
+                                        {
+                                            if (i > 1) break;
+                                        }
+                                        if (gameBoard[piece.Position.row + (move.row * i), piece.Position.column + (move.column * i)].IsOccupied == false)// multiply the offset by i then add this to the pieces current position adn check if any tiles along this path are occupied
+                                        {
+                                            if (!tileBlocked) //Only allow the tile blocked flag to be set to false if it hasnt previously been set to true. This prevents a tile being blocked, then a tile after that being free making this flag be set to false
+                                            {
+                                                tileBlocked = false; //set the flag to false as no tiles along the path are occuppied
+                                            }
+                                        }
+                                        else //if a tile along the path is occuppied
+                                        {
+                                            
+                                            tileBlocked = true; //set the flag to true to indicate that a tile along this path is blocked 
+                                            moveSuccess = false; //if there are occuppied tiles then dont allow the piece to move
+                                        }
+
+                                        if (index == 1) //check if the piece is trying to move only one square - this is for capturing a piece
+                                        {
+                                            if (i == 1) //now check if its on its first iteration
+                                            {
+                                                if (gameBoard[destination.row, destination.column].IsOccupied == true) //check if we are taking a piece - this mean we would have checked every tile in between the start position and the end position and now we are manually checking the end position
+                                                {
+                                                    //**
+                                                    moveSuccess = true;
+                                                    isCapturingPiece = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        else //if the piece is trying to move more than one square - this is for capturing a piece
+                                        {
+                                            if (i == index - 1) //check if we have gone through every tile in between the pieces position and destination
+                                            {
+                                                if (gameBoard[piece.Position.row + (move.row * i), piece.Position.column + (move.column * i)].IsOccupied == false)
+                                                {
+                                                    if (!tileBlocked)
+                                                    {
+                                                        if (gameBoard[destination.row, destination.column].IsOccupied == true) //check if we are taking a piece - this measn we would have checked every tile in between the start position and the end position and now we are manually checking the end position
+                                                        {
+                                                            moveSuccess = true;
+                                                            isCapturingPiece = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if (i == index) //check if this current iteration is the interation which would give us the pieces destination - this is not for capturing a piece so we go all the way to the destination as we are expecting this tile to not be occupied
+                                        {
+
+                                            if (tileBlocked == false) //check that no tiles along the path were blocked
+                                            {
+                                                moveSuccess = true; //if no tiles are occuppied then allow the piece to move and set the move success flag to true
+                                                hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move  
+                                            } //we dont have an else as we dont allow a move under any circumstances if a tile was occuppied along the path
+
+                                        }
+                                    }
+                                }
+                            }
+                            if (moveSuccess)
+                            {
+
                                 break;
-
-
                             }
+
                         }
-
-                        if (isDestinationThisMove == true) //if the destination position is contained in this current offset
+                    }
+                    else //The final piece type is the knight which has a unique movement system
+                    {
+                        foreach (var move in possibleMoves)
                         {
-                            bool tileBlocked = false; //flag to check that a tile on the path from a piece position to its destination is not blocked
-                            //while (piece.Position.row <= destination.row && piece.Position.column <= destination.column)
+                            bool isDestinationThisMove = false; //flag to check if the current offset in the iteration is the same offset the destination lies in
+                            if ((destination.row - piece.Position.row) == move.row && (destination.column - piece.Position.column) == move.column) //check if the move is valid by checking if the move is possible via the offstets for the knight
                             {
-                                for (int i = 1; i <= index; i++) //loop through from 1 to the multiplier (this is to check the tiles in between the destination tile and piece position tile)
+                                isDestinationThisMove = true; //if the displacement vector matches the current offset then set the flag to true
+                            }
+
+                            if (isDestinationThisMove)
+                            {
+                                if (gameBoard[destination.row, destination.column].IsOccupied == false)
                                 {
-                                    if (piece.PieceType == PieceTypes.king) //the king can only move one square in any direction, this avoids the king being allowed the same movement pattern as the queen
-                                    {
-                                        if (i > 1) break;
-                                    }
-                                    if (gameBoard[piece.Position.row + (move.row * i), piece.Position.column + (move.column * i)].IsOccupied == false)// multiply the offset by i then add this to the pieces current position adn check if any tiles along this path are occupied
-                                    {
-                                        if (!tileBlocked) //Only allow the tile blocked flag to be set to false if it hasnt previously been set to true. This prevents a tile being blocked, then a tile after that being free making this flag be set to false
-                                        {
-                                            tileBlocked = false; //set the flag to false as no tiles along the path are occuppied
-                                        }
-                                    }
-                                    else //if a tile along the path is occuppied
-                                    {
-                                        tileBlocked = true; //set the flag to true to indicate that a tile along this path is blocked 
-                                        moveSuccess = false; //if there are occuppied tiles then dont allow the piece to move
-                                    }
-
-                                    if (index == 1) //check if the piece is trying to move only one square - this is for capturing a piece
-                                    {
-                                        if (i == 1) //now check if its on its first iteration
-                                        {
-                                            if (gameBoard[destination.row, destination.column].IsOccupied == true) //check if we are taking a piece - this mean we would have checked every tile in between the start position and the end position and now we are manually checking the end position
-                                            {
-                                                moveSuccess = true;
-                                                capturePiece(piece, Pieces[destination.row][destination.column]);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    else //if the piece is trying to move more than one square - this is for capturing a piece
-                                    {
-                                        if (i == index - 1) //check if we have gone through every tile in between the pieces position and destination
-                                        {
-                                            if (gameBoard[destination.row, destination.column].IsOccupied == true) //check if we are taking a piece - this measn we would have checked every tile in between the start position and the end position and now we are manually checking the end position
-                                            {
-                                                moveSuccess = true;
-                                                capturePiece(piece, Pieces[destination.row][destination.column]);
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    if (i == index) //check if this current iteration is the interation which would give us the pieces destination - this is not for capturing a piece so we go all the way to the destination as we are expecting this tile to not be occupied
-                                    {
-
-                                        if (tileBlocked == false) //check that no tiles along the path were blocked
-                                        {
-                                            moveSuccess = true; //if no tiles are occuppied then allow the piece to move and set the move success flag to true
-                                            hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move  
-                                        } //we dont have an else as we dont allow a move under any circumstances if a tile was occuppied along the path
-
-                                    }
+                                    moveSuccess = true; //if the destination tile is not occupied allow the move
+                                }
+                                else
+                                {
+                                    isCapturingPiece = true;
+                                    moveSuccess = true; //if the destination tile is occuppied and the knight can capture it allow the move
                                 }
                             }
                         }
-                        if (moveSuccess)
-                        {
-                            gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the index of the original tile of the piece in the gameboard array to not occuppied as the piece is moving from this tile 
-                            Pieces[piece.Position.row][piece.Position.column] = null; //set the index of the original position of the piece in the pieces list to null as the piece is being moved to a different index
-                            piece.Position = destination; //set the pieces position to the destination position
-                            Pieces[destination.row][destination.column] = piece;//set the index of the pieces array at the new position of the piece to hold the piece
-                            gameBoard[destination.row, destination.column].IsOccupied = true; //set the tile at the index of the new position of the piece in the gameboard array to be occupied
-                            piece.hasMoved = true; //set the has moved property of the piece to true
-                            break;
-                        }
-
                     }
-                }
-                else //The final piece type is the knight which has a unique movement system
-                {
-                    foreach (var move in possibleMoves)
+                    if (moveSuccess) //if a move was successfull
                     {
-                        bool isDestinationThisMove = false; //flag to check if the current offset in the iteration is the same offset the destination lies in
-                        if ((destination.row - piece.Position.row) == move.row && (destination.column - piece.Position.column) == move.column) //check if the move is valid by checking if the move is possible via the offstets for the knight
-                        {
-                            isDestinationThisMove = true; //if the displacement vector matches the current offset then set the flag to true
-                        }
 
-                        if (isDestinationThisMove)
+                        if (isThisMethodCheckingForCheck) //check if the method was called to check if a player is in check
                         {
-                            if (gameBoard[destination.row, destination.column].IsOccupied == false)
+                            
+
+                            if (isThisMethodCheckingForEscapingCheck) //check if the method was called to check if a move would allow a player to escape check
                             {
-                                moveSuccess = true; //if the destination tile is not occupied allow the move
-                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the index of the original tile of the piece in the gameboard array to not occuppied as the piece is moving from this tile 
-                                Pieces[piece.Position.row][piece.Position.column] = null; //set the index of the original position of the piece in the pieces list to null as the piece is being moved to a different index
-                                piece.Position = destination; //set the pieces position to the destination position
-                                Pieces[destination.row][destination.column] = piece;//set the index of the pieces array at the new position of the piece to hold the piece
-                                gameBoard[destination.row, destination.column].IsOccupied = true; //set the tile at the index of the new position of the piece in the gameboard array to be occupied
-                                piece.hasMoved = true; //set the has moved property of the piece to true
-                                hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move
+                                //**black escape check check goes here
+                                isPlayerinCheck = false; //reset the flag to show if a player is in check
+                                isMoveEscapedCheck = false; //cheange the flag used to show if a player has escaped check to be true as the player has escaped check
+                                debounce = false; //set debounce to false as the player has escaped check and movement should be allowed
+                                hasRecursiveCallHappened = false; //reset the flag which allows the check for check method to run to make sure a piece is not moving into a position where it would be in check
                             }
                             else
+                            { 
+                                isPlayerinCheck = true; //set the flag to true as the move succeeded so the player is in check
+                            }
+
+
+                        }
+
+                        if (!isThisMethodCheckingForCheck) //if the method was called to move or capture, not for checking for check
+                        {
+                            if (!isCapturingPiece) //if the piece is not trying to capture and the move is legal
+                            {
+                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile the piece is on before moving to not occupied 
+                                Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+                                piece.Position = destination; //set the piece position to the destination 
+                                Pieces[destination.row][destination.column] = piece; //update the list to now hold the piece at the index of its new position
+                                piece.hasMoved = true; //set the piece has moved flag to true so the pawn can no longer do the two square move 
+                                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the destination tile (tile the pawn is currently on) to occupied 
+                                hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move
+                                isCapturingPiece = false; //reset the flag which allows the check for check method to run to make sure a piece is not moving into a position where it would be in check
+                            }
+                            else //if the piece is trying to capture and the move is legal
                             {
                                 capturePiece(piece, Pieces[destination.row][destination.column]);
-                                moveSuccess = true; //if the destination tile is occuppied and the knight can capture it allow the move
+                                isCapturingPiece = false; //reset the flag which allows the check for check method to run to make sure a piece is not moving into a position where it would be in check
                             }
+                            playerTurnCounter += 1;//move the playerTurnCounter up by one to show the calculation that its the next players turn
+
+                            
+
+                            player1.Checked = checkForCheck((0, 0), player1, false); //run the checks which check if a player is in check as we are not checking if the piece can escape check just put random values for the first parameter and set the last one to false so the function knows not to use these values in the first parameter and instead use the player's king field
+                            player2.Checked = checkForCheck((0, 0), player2, false); //
+
+
+
+
+                        }
+                        
+
+
+
+
+
+
+
+                        
+                    }
+                    else //if the move failed
+                    {
+                            if (isThisMethodCheckingForCheck) //check if the move failed and was checking for check
+                            {
+                                if (isThisMethodCheckingForEscapingCheck) //check if the mvoe that failed was a piece moving to a tile which a king wanting to move out of check was going to move to (simulation not actual movement) - this means that this tile is safe for the king to move to
+                                {
+                                    isMoveEscapedCheck = true; //The piece will no longer be in check if it takes this move
+                                    hasRecursiveCallHappened = false; //reset the flag which allows the check for check method to run to make sure a piece is not moving into a position where it would be in check
+                                }
+                            }
+                        if (!isThisMethodCheckingForCheck)
+                        {
+                            player1.Checked = checkForCheck((0, 0), player1, false); //run the checks which check if a player is in check as we are not checking if the piece can escape check just put random values for the first parameter and set the last one to false so the function knows not to use these values in the first parameter and instead use the player's king field
+                            player2.Checked = checkForCheck((0, 0), player2, false);
                         }
                     }
                 }
-                if (moveSuccess)
-                {
-                    playerTurnCounter += 1;//move the playerTurnCounter up by one to show the calculation that its the next players turn
-                }
-
-
+                debounce = false; //reset debounce as the cehcked king is no longer trying to move
+                moveSuccess = false; //reset move success
             }
         }
 
-
+        
 
 
         /* if (moveSuccess == false)
@@ -1362,6 +1445,8 @@ public class GameState
                     Pieces[row][column] = blackPieceFactory.CreateKing((row, column)); // Black King  
 
                     gameBoard[row, column].IsOccupied = true;
+                    player2.playerKing =  Pieces[row][column]; //store blacks king at the start of the game in player 2s (black) king field
+                   // blacksKing = Pieces[row][column]; //store blacks king at the start of the game in a variable
 
                 }
 
@@ -1372,12 +1457,14 @@ public class GameState
                     Pieces[row][column] = whitePieceFactory.CreateKing((row, column)); // White King  
 
                     gameBoard[row, column].IsOccupied = true;
-
+                    player1.playerKing = Pieces[row][column]; //store whites king at the start of the game in player 1s (white) king field
+                    //whitesKing = Pieces[row][column]; //store whites king at the start of the game in a variable
                 }
 
             }
 
         }
+        arePiecesLoaded = true;
 
     }
 
@@ -1601,9 +1688,151 @@ public class GameState
         hasPieceBeenCaptured = true; //indicate a piece has been captured
     }
 
+    
+
+    public bool checkForCheck((int row, int column) possiblePosition, Player player, bool isCheckingForEscapingCheck)
+    {
+        //isPlayerinCheck = false;
+        itemColor playerColour = player.color; //get the colour of the player
+
+        if (playerColour == itemColor.black) //if the player is black
+        {
+            if (!isCheckingForEscapingCheck) // if not checking for whether the player can escape check use the kings current position which would be stored in the player.playerKing field, instead of using the possiblePosition parameter value which would be used if we wanted to see if the psoition that a king may possibly move to would still lead to the king being in check
+            {
+                for (int row = 0; row < 8; row++) //outer loop for rows  
+                {
+
+                    for (int column = 0; column < 8; column++) //inner loop for columns  
+                    {
+                        if (Pieces[row][column] != null) //check that the value in the pieces list we are trying to compare is not null
+                        {
+                            if (Pieces[row][column].Color == itemColor.white) //only select pieces from the pieces list that are white - opposite colour to black - to check if these pieces can capture black
+                            {
+
+                                MakeMove(Pieces[row][column], player.playerKing.Position, true, false); //try make all possible white pieces capture the black king
+                                if (isPlayerinCheck) //check if the flag which signals when a plaer is in check has been set off
+                                {
+
+                                    isPlayerinCheck = false; //reset the flag
+                                    return true; //return true - this would be captured by a players check variable - would mean that the black player, player 2 is in check
+
+                                }
+
+
+
+                            }
+
+                        }
+
+                    }
+                }
+            }
+            else // if checking for whether the player can escape check use the possiblePosition parameter value which would be used if we wanted to see if the psoition that a king may possibly move to would still lead to the king being in check - check that this position would elad to the king escaping check
+            {
+                for (int row = 0; row < 8; row++) //outer loop for rows  
+                {
+                    for (int column = 0; column < 8; column++) //inner loop for columns  
+                    {
+                        if (Pieces[row][column] != null) //check that the value in the pieces list we are trying to compare is not null
+                        {
+                            if (Pieces[row][column].Color == itemColor.white) //only select pieces from the pieces list that are white - opposite colour to black - to check if these pieces can capture black
+                            {
+                                MakeMove(Pieces[row][column], possiblePosition, true, true); //try make all possible white pieces capture the black king
+                                if (isMoveEscapedCheck) //check if the flag which signals when a plaer is in check has been set off
+                                {
+
+                                isMoveEscapedCheck = false; //reset the flag
+                                return true; //return true - this would be captured by a players check variable - would mean that the black player, player 2 is in check if moving to a certain position
+
+                                }
+                                else
+                                {
+
+                                return false; //return false - this would be captured by a players check variable - would mean that the black player, player 2 is not in check if moving to a certain position
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+        }
+        else //if not black - white
+        {
+         
+
+            if (!isCheckingForEscapingCheck) // if not checking for whether the player can escape check use the kings current position which would be stored in the player.playerKing field, instead of using the possiblePosition parameter value which would be used if we wanted to see if the psoition that a king may possibly move to would still lead to the king being in check
+            { 
+                for (int row = 0; row < 8; row++) //outer loop for rows  
+                {
+
+                    for (int column = 0; column < 8; column++) //inner loop for columns  
+                    {
+                        if (Pieces[row][column] != null) //check that the piece in the pieces list we are trying to access is not null
+                        {
+                            if (Pieces[row][column].Color == itemColor.black) //only select pieces from the pieces list that are black - opposite colour to white - to check if these pieces can capture white
+                            {
+
+                                MakeMove(Pieces[row][column], player.playerKing.Position, true, false); //try make all possible black pieces capture the white king
+                                if (isPlayerinCheck) //check if the flag which signals when a plaer is in check has been set off
+                                {
+
+                                    isPlayerinCheck = false; //reset the flag
+                                    return true; //return true - this would be captured by a players check variable - would mean that the black player, player 2 is in check
+
+                                }
+                            }
+
+
+                        }
+
+                    }
+
+                }
+                
+            }
+            else // if checking for whether the player can escape check use the possiblePosition parameter value which would be used if we wanted to see if the psoition that a king may possibly move to would still lead to the king being in check - check that this position would elad to the king escaping check
+            {
+                for (int row = 0; row < 8; row++) //outer loop for rows  
+                {
+
+                    for (int column = 0; column < 8; column++) //inner loop for columns  
+                    {
+                        if (Pieces[row][column] != null) //check that the piece in the pieces list we are trying to access is not null
+                        {
+                            if (Pieces[row][column].Color == itemColor.black) //only select pieces from the pieces list that are black - opposite colour to white - to check if these pieces can capture white
+                            {
+                                MakeMove(Pieces[row][column], possiblePosition, true, true); //try make all possible white pieces capture the black king
+                                if (isMoveEscapedCheck) //check if the flag which signals when a plaer is in check has been set off
+                                {
+
+                                isMoveEscapedCheck = false; //reset the flag
+                                return true; //return true - this would be captured by a players check variable - would mean that the white player, player 1 is in check if moving to a certain position
+
+                                }
+                                else
+                                {
+
+                                return false; //return false - this would be captured by a players check variable - would mean that the white player, player 1 is in check if moving to a certain position
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+
+        }
+        return false; //if no pieces of the opposite colour can capture the given players king return false - this would mean the player is not in check
+        
+    }
+
 
     private void timer_Tick(object sender, EventArgs e)
     {
+        
+        
+
         if (playerTurnCounter % 2 == 0) //if the counter is even its whites turn - 0 is the first psoitive even number so white always goes first
         {
             playerTurn = itemColor.white;
@@ -1644,6 +1873,8 @@ public class GameState
                 isGameEnd = true; //set the game to have ended
             }
         }
+
+        
 
     }
 

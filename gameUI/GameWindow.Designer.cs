@@ -33,8 +33,9 @@
             label2 = new Label();
             plr2time = new Label();
             plr1time = new Label();
-            plr1CapturedPiecesBox = new GroupBox();
             plr2CapturedPiecesBox = new GroupBox();
+            plr1CapturedPiecesBox = new GroupBox();
+            lblGameInfo = new Label();
             SuspendLayout();
             // 
             // btnquit
@@ -43,7 +44,7 @@
             btnquit.AutoSize = true;
             btnquit.BackColor = Color.Gold;
             btnquit.Font = new Font("Arial", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnquit.Location = new Point(748, 249);
+            btnquit.Location = new Point(748, 166);
             btnquit.Name = "btnquit";
             btnquit.Size = new Size(143, 54);
             btnquit.TabIndex = 2;
@@ -95,27 +96,38 @@
             plr1time.TabIndex = 6;
             plr1time.Text = "plr1time";
             // 
-            // plr1CapturedPiecesBox
-            // 
-            plr1CapturedPiecesBox.BackColor = Color.DarkOrange;
-            plr1CapturedPiecesBox.ForeColor = SystemColors.ActiveCaptionText;
-            plr1CapturedPiecesBox.Location = new Point(664, 309);
-            plr1CapturedPiecesBox.Name = "plr1CapturedPiecesBox";
-            plr1CapturedPiecesBox.Size = new Size(227, 162);
-            plr1CapturedPiecesBox.TabIndex = 7;
-            plr1CapturedPiecesBox.TabStop = false;
-            plr1CapturedPiecesBox.Text = "Captured Pieces";
-            // 
             // plr2CapturedPiecesBox
             // 
             plr2CapturedPiecesBox.BackColor = Color.DarkOrange;
             plr2CapturedPiecesBox.ForeColor = SystemColors.ActiveCaptionText;
-            plr2CapturedPiecesBox.Location = new Point(664, 79);
+            plr2CapturedPiecesBox.Location = new Point(664, 59);
             plr2CapturedPiecesBox.Name = "plr2CapturedPiecesBox";
-            plr2CapturedPiecesBox.Size = new Size(227, 164);
+            plr2CapturedPiecesBox.Size = new Size(227, 89);
             plr2CapturedPiecesBox.TabIndex = 8;
             plr2CapturedPiecesBox.TabStop = false;
             plr2CapturedPiecesBox.Text = "Captured Pieces";
+            // 
+            // plr1CapturedPiecesBox
+            // 
+            plr1CapturedPiecesBox.BackColor = Color.DarkOrange;
+            plr1CapturedPiecesBox.ForeColor = SystemColors.ActiveCaptionText;
+            plr1CapturedPiecesBox.Location = new Point(664, 396);
+            plr1CapturedPiecesBox.Name = "plr1CapturedPiecesBox";
+            plr1CapturedPiecesBox.Size = new Size(227, 89);
+            plr1CapturedPiecesBox.TabIndex = 9;
+            plr1CapturedPiecesBox.TabStop = false;
+            plr1CapturedPiecesBox.Text = "Captured Pieces";
+            // 
+            // lblGameInfo
+            // 
+            lblGameInfo.AutoSize = true;
+            lblGameInfo.BackColor = Color.Snow;
+            lblGameInfo.Font = new Font("Arial Rounded MT Bold", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblGameInfo.Location = new Point(664, 238);
+            lblGameInfo.Name = "lblGameInfo";
+            lblGameInfo.Size = new Size(103, 22);
+            lblGameInfo.TabIndex = 10;
+            lblGameInfo.Text = "Game Info";
             // 
             // GameWindow
             // 
@@ -123,8 +135,9 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.SaddleBrown;
             ClientSize = new Size(903, 528);
-            Controls.Add(plr2CapturedPiecesBox);
+            Controls.Add(lblGameInfo);
             Controls.Add(plr1CapturedPiecesBox);
+            Controls.Add(plr2CapturedPiecesBox);
             Controls.Add(plr1time);
             Controls.Add(plr2time);
             Controls.Add(label2);
@@ -143,7 +156,8 @@
         private Label label2;
         private Label plr2time;
         private Label plr1time;
-        private GroupBox plr1CapturedPiecesBox;
         private GroupBox plr2CapturedPiecesBox;
+        private GroupBox plr1CapturedPiecesBox;
+        private Label lblGameInfo;
     }
 }

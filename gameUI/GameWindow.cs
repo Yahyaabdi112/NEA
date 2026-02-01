@@ -16,7 +16,7 @@ namespace gameUI
 {
     public partial class GameWindow : Form
     {
-        static int gameTime = 2;
+        static int gameTime = 20;
         static string plr1name;
         static string plr2name;
         static bool isMessageBoxShown = false; //flag which says if the message box
@@ -233,8 +233,29 @@ namespace gameUI
             plr1time.Text = game.player1.timeRemaining.ToString();
 
 
+            if (game.player1.Checked) //check if white or black has been checked - if they are checked their checked field would be true - if so change the label to show their in check - if not just leave the label empty
+            {
 
-            Refresh();
+                lblGameInfo.Text = "White is in Check";
+                // game.isPlayerinCheck = false;
+
+            }
+            else if (game.player2.Checked)
+            {
+
+                lblGameInfo.Text = "Black is in Check";
+                //game.isPlayerinCheck = false;
+
+            }
+            else
+            {
+                lblGameInfo.Text = "";
+            }
+
+
+
+
+                Refresh();
         }
 
         private void lightUpTileDebounce_Tick(object? sender, EventArgs e)//runs every time the debounce timers interval ends
@@ -589,7 +610,7 @@ namespace gameUI
             {
                 if (selectedPiece.Position.row != mouseY || selectedPiece.Position.column != mouseX)
                 {
-                    game.MakeMove(game.Pieces[selectedPos.row][selectedPos.column], ((int)mouseY, (int)mouseX)); //move the piece using the make move method - we dont have to worry about rectangles or drawing anything because make move moves the piece form its current index to its destination index
+                    game.MakeMove(game.Pieces[selectedPos.row][selectedPos.column], ((int)mouseY, (int)mouseX), false, false); //move the piece using the make move method - we dont have to worry about rectangles or drawing anything because make move moves the piece form its current index to its destination index
                 }
 
 
