@@ -610,7 +610,7 @@ namespace gameUI
             {
                 if (selectedPiece.Position.row != mouseY || selectedPiece.Position.column != mouseX)
                 {
-                    game.MakeMove(game.Pieces[selectedPos.row][selectedPos.column], ((int)mouseY, (int)mouseX), false, false); //move the piece using the make move method - we dont have to worry about rectangles or drawing anything because make move moves the piece form its current index to its destination index
+                    game.MakeMove(game.Pieces[selectedPos.row][selectedPos.column], ((int)mouseY, (int)mouseX)); //move the piece using the make move method - we dont have to worry about rectangles or drawing anything because make move moves the piece form its current index to its destination index
                 }
 
 
