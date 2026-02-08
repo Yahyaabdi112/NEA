@@ -1352,19 +1352,79 @@ public class GameState
             
             else //if the player is checked and is not trying to move their king and moving any other pieces would not allow the player to escape check dont allow the move
             {
-                var blockingInfo = canPieceBlockCheck(currentPlayer);
+                //get the list of checking pieces
+                List<IPiece> checkingPieces;
 
-                if (blockingInfo.isTrue)
+                if (currentPlayer.color == itemColor.black)
                 {
-                    foreach (var blockingPiece in blockingInfo.BlockingPieces)
+                    checkingPieces = player2CheckingPiecesList;
+                }
+                else
+                {
+                    checkingPieces = player1CheckingPiecesList;
+                }
+
+                foreach (var checkingPiece in checkingPieces)
+                {
+                    if (destination.row == checkingPiece.Position.row && destination.column == checkingPiece.Position.column) //check if the piece being moved is trying to capture the checking peice
                     {
-                        if (piece.Position == blockingPiece.Position && isMoveLegal(piece, destination).moveSuccess)
+                        if (isMoveLegal(piece, destination).moveSuccess) //check if the move is legal
                         {
                             allowMove = true;
                             break;
                         }
                     }
+                    if (checkingPiece.PieceType == PieceTypes.bishop || checkingPiece.PieceType == PieceTypes.rook || checkingPiece.PieceType == PieceTypes.queen)
+                    {
+                        List<(int row, int column)> tilesAlongPath = new List<(int row, int column)>();
+                        int numberOfTiles = 0;
+
+                        foreach (var move in checkingPiece.Moves())
+                        {
+                            bool isDestinationThisIndex = false;
+
+                            for (int i = 0; i < 9; i++)
+                            {
+                                if ((currentPlayer.playerKing.Position.row - checkingPiece.Position.row == move.row * i) && (currentPlayer.playerKing.Position.column - checkingPiece.Position.column == move.column * i))
+                                {
+                                    numberOfTiles = i;
+                                    isDestinationThisIndex = true;
+                                    break;
+                                }
+                            }
+
+                            if (isDestinationThisIndex)
+                            {
+                                for (int i = 1; i < numberOfTiles; i++)
+                                {
+                                    tilesAlongPath.Add(((checkingPiece.Position.row + move.row * i), (checkingPiece.Position.column + move.column * i)));
+                                }
+                                break;
+                            }
+                        }
+
+                        foreach (var tile in tilesAlongPath)
+                        {
+                            if (destination.row == tile.row && destination.column == tile.column)
+                            {
+                                if (isMoveLegal(piece, destination).moveSuccess)
+                                {
+                                    allowMove = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (allowMove)
+                        {
+                            break;
+                        }
+                    }
+
                 }
+
+               
+                
             }
         }
         bool moveSuccess = isMoveLegal(piece, destination).moveSuccess;
@@ -1787,6 +1847,11 @@ public class GameState
         else //if the current player is white the list of pieces which are putting the piece in check are black pieces
         {
             checkingPieces = player1CheckingPiecesList;
+        }
+
+        if (checkingPieces.Count() != 1) //if the player is in check by more than two pieces then return false as the only way to escape check when checked by two pieces is to move the king, and also retun a blacnk list as no pieces can block
+        {
+            return (false, new List<IPiece>());
         }
 
         foreach (var checkingPiece in checkingPieces) //loop through all the pieces which currently have the king in check
@@ -2340,13 +2405,13 @@ public class GameState
 
         }
 
-        if (piece.Color == itemColor.black) //if the piece is black remove it from the list which stores black's pieces
+        if (capturedPiece.Color == itemColor.black) //if the piece is black remove it from the list which stores black's pieces
         {
-            player2.playerPieces.Remove(piece);
+            player2.playerPieces.Remove(capturedPiece);
         }
         else //if the piece is white remove it from the list which stores white's pieces
         {
-            player1.playerPieces.Remove(piece);
+            player1.playerPieces.Remove(capturedPiece);
         }
 
             piece.hasMoved = true;
@@ -2646,6 +2711,7 @@ public class GameState
                 checkingPieces.Add(piece); //if the move is successful then the piece whihc is doing the checking is this current piece
                 isTrue = true;
                 moveSuccess = false;
+                break;
             }
         }
         return (checkingPieces, isTrue);
