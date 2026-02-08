@@ -1,0 +1,14 @@
+Function bool ifPlayerMovedPieceWouldPlayerStillBeInCheck(Player player, IPiece piece, (int row, int column) destination)
+	Player playerCopy = player 
+	ITile[,] gameBoardCopy = gameBoard;
+	List<IPiece> playerPiecesCopy = player.PlayerPieces
+
+	makeMove(piece, destination, gameBoardCopy)
+	playerCopy.playerPieces = 
+get canpeiceblockcheck to return the piece which would be able to block check
+the break on line 2610 prevent all the pieces which check the king from being added to the list and only allows one
+The main error is that if the player is black i assign player 1 checking pieces list to the checking pieces variable and the same for white, whe player 1 checking pieces actually holds 
+
+Another bug i got was the player 2 checking pieces list had 5 values instead of correctly having 1 value as only one piece was putting it in check
+
+After debugging i can see the bug is coming from incorrect logic for how the tiles between a sliding piece and a king are calculated, as the 

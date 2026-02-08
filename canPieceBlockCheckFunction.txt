@@ -1,0 +1,61 @@
+function bool canPieceBlockCheck(Player player)
+	bool canBlockAllCheckingPieces = true //assume initially that all pieces which check the king can be blocked - if a piece checking the king cannot be blocked this is set to false
+	
+	foreach(var checkingPiece in checkignPieces) //loop through all the pieces which currently have the king in check
+		if piece.pieceType == pieceTypes.pawn //check if the piece which has the king in check is a pawn
+			foreach(var playerPiece in player.playerPieces) //loop through all of the players pieces
+				if(!ismoveLegal(playerPiece, checkingPiece.Position) //if a players piece cant capture the pawn
+					canBlockAllCheckingPieces = false //this would mean atleast one piece cant be captured by the player so the flag should be set to false
+				endif
+			next playerPiece
+		endif
+
+		if checkingPiece.pieceType== pieceTypes.Knight //check if the piece which has the king in check is a knight
+			foreach(var playerPiece in player.playerPieces) //loop through all of the players pieces
+				if(!isMoveLegal(playerPiece, checkingPiece.Position) //if a players piece cant capture the knight
+					canBlockAllCheckingPieces = false //this would mean that atleast one piece cant be captured by the player so the flag would be set to false
+				endif
+			next playerPiece
+		endif
+
+		if checkingPiece.pieceType == **any sliding piece** //check if the piece which currently has the king in check is a sliding piece
+
+			foreach var playerPiece in player.playerPieces //loop through all of the players pieces
+
+				List<(int row, int column)> tilesAlongPath = new List<(int row, int column)> //create a new list to store tiles on the path from the sliding piece to the king
+
+				foreach var move in checkingPiece.moves() //loop through all of the sliding pieces move offsets
+
+					numberOfTiles = 0 //create a variable to hold the number of tiles between the king and the sliding piece
+					isDestinationThisIndex = false;
+
+					for i = 1,9; 
+						if((playerPiece.Position.row - checkingPiece.Position.row) == move.row * i && (playerPiece.Position.column - checkingPiece.Position.column) == move.column * i) //this if statement calculates the multiplier and if this current offset is the right one to move the sliding piece to the king
+							numberOfTiles = i
+							isDestinationThisIndex = true;
+						endif
+					next i
+
+					if(isDestinationThisIndex) //if the current offset is the offset which would allow the sliding piece to move to the king
+						for i = 1,numberOfTiles //loop from one to the multiplier
+							tilesAlongPath.Add((checkingPiece.row + move.row * i), (checkingPiece.column + move.column * i)) //add all the tiles along this path to the list which stores the tiles between teh sliding peice and the king
+						next i
+					endif
+				next move
+
+				if(!tilesAlongPath.isEmpty()) //if the list is not empty
+					bool canAPieceBeMovedToAtleastOneTile = false
+					foreach tile in tilesAlongPath //loop through every tile in the list
+						if (isMoveLegal(playerPiece, tile))
+							canAPieceBeMovedToAtleastOneTile = true
+						endif
+					next tile
+					
+					if (!canAPieceBeMovedToAtleastOneTile)
+						canBlockAllCheckingPieces = false
+					endif
+				endif
+			next playerPiece
+		endif
+	next checkingPiece
+return canBlockAllCheckingPieces

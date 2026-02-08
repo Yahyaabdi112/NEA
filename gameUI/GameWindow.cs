@@ -252,10 +252,18 @@ namespace gameUI
                 lblGameInfo.Text = "";
             }
 
+            if (game.player1.CheckMate)
+            {
+                lblGameInfo.Text = "White is in Checkmate";
+            }
+            else if (game.player2.CheckMate)
+            {
+                lblGameInfo.Text = "Black is in Checkmate";
+            }
+            
 
 
-
-                Refresh();
+            Refresh();
         }
 
         private void lightUpTileDebounce_Tick(object? sender, EventArgs e)//runs every time the debounce timers interval ends
