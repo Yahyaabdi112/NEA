@@ -2166,9 +2166,9 @@ public class GameState
 
     public bool isPlayerinCheckmate(Player player)
     {
-        bool canKingEscapeCheckByMoving = true; //flag to indicate if the king can escape check by moving
+        bool canKingEscapeCheckByMoving = false; //flag to indicate if the king can escape check by moving
         bool canPieceBlockCheckFlag = false; //flag to indicate if a piece can block check
-        for (int i = 0; i < gameBoard.Length; i++)
+        for (int i = 0; i < 8; i++)
         {
             for (int j = 0; j < 8; j++)
             {
@@ -2393,38 +2393,41 @@ public class GameState
 
     public void capturePiece(IPiece piece, IPiece capturedPiece)
     {
-        if (playerTurn == itemColor.white) //if its white who captured the puece
+        if (capturedPiece.Color != piece.Color)
         {
-            var type = piece.GetType();
+            if (piece.Color == itemColor.white) //if its white who captured the puece
+            {
+                var type = piece.GetType();
 
-            player1.takenPieces.Add(capturedPiece);
-        }
-        else //if its black who captured the piece
-        {
-            player2.takenPieces.Add(capturedPiece);
+                player1.takenPieces.Add(capturedPiece);
+            }
+            else //if its black who captured the piece
+            {
+                player2.takenPieces.Add(capturedPiece);
 
-        }
+            }
 
-        if (capturedPiece.Color == itemColor.black) //if the piece is black remove it from the list which stores black's pieces
-        {
-            player2.playerPieces.Remove(capturedPiece);
-        }
-        else //if the piece is white remove it from the list which stores white's pieces
-        {
-            player1.playerPieces.Remove(capturedPiece);
-        }
+            if (capturedPiece.Color == itemColor.black) //if the piece is black remove it from the list which stores black's pieces
+            {
+                player2.playerPieces.Remove(capturedPiece);
+            }
+            else //if the piece is white remove it from the list which stores white's pieces
+            {
+                player1.playerPieces.Remove(capturedPiece);
+            }
 
             piece.hasMoved = true;
-        gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile which holds the pieces initial position to not occuppied
-        Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
-        piece.Position = capturedPiece.Position; //set the piece position to the destination
+            gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile which holds the pieces initial position to not occuppied
+            Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+            piece.Position = capturedPiece.Position; //set the piece position to the destination
 
-        Pieces[piece.Position.row][piece.Position.column] = null; //remove the captured piece from the pieces list
-        Pieces[piece.Position.row][piece.Position.column] = piece; //set where the index of the captured piece in the Pieces list to hold the piece whihc captured it
+            Pieces[piece.Position.row][piece.Position.column] = null; //remove the captured piece from the pieces list
+            Pieces[piece.Position.row][piece.Position.column] = piece; //set where the index of the captured piece in the Pieces list to hold the piece whihc captured it
 
-        gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the tile which holds the piece to be captured to be occuppied
+            gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the tile which holds the piece to be captured to be occuppied
 
-        hasPieceBeenCaptured = true; //indicate a piece has been captured
+            hasPieceBeenCaptured = true; //indicate a piece has been captured
+        }
     }
 
     public (List<IPiece> checkingPiecesList, bool isInCheck) checkDetectionSystem(Player player, (int row, int column) position = default)
@@ -2442,7 +2445,27 @@ public class GameState
         }
         else //if the position is an actual specified value this means the function call is requesting to use the psoition parameter instead
         {
-            destination = position;
+            if (Pieces[position.row][position.column] != null) //if the position passed in contains a piece
+            {
+                if (player.playerKing.Color != Pieces[position.row][position.column].Color) //check that the players king and the position the players king is trying to move is not occuppied by a piece of the same colour
+                {
+                    destination = position;
+                }
+                else
+                {
+                    if (player.CheckMate) //if the king was previously checked then set the flag to true as the king cant legally make a move to escape check
+                    {
+                        isTrue = true;
+                    }
+                    isTrue = true; //set isTrue to true as the king cant move to this position so the king is still in check
+                    return (checkingPieces, isTrue);
+                }
+            }
+            else //if the position passed in doenst contain a piece
+            {
+
+                destination = position;
+            }
         }
 
         if (player.color == itemColor.white)
@@ -2714,7 +2737,23 @@ public class GameState
                 break;
             }
         }
-        return (checkingPieces, isTrue);
+        if (destination != player.playerKing.Position) //check if the king is not moveing to teh same position it was already in
+        {
+            if (isMoveLegal(player.playerKing, destination).moveSuccess) //check if the king moving to this position is possible
+            {
+                return (checkingPieces, isTrue);
+            }
+            else //if the king cant move to this position then the king would have to stay in its old position  and state
+            {
+                isTrue = true;
+                 //change position to destination
+                return (checkingPieces, isTrue);
+            }
+        }
+        
+            return (checkingPieces, isTrue);
+        
+        
     }
     
     /*public bool checkForCheck((int row, int column) possiblePosition, Player player, bool isCheckingForEscapingCheck)
