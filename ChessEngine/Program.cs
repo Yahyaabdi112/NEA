@@ -1339,6 +1339,17 @@ public class GameState
             currentPlayer = player2; //black = player2
         }
 
+        if (piece.PieceType == PieceTypes.king) //if the plaeyr is trying to move their king
+        {
+            allowMove = false;
+            if (!checkIfKingInCheckAtPosition(currentPlayer, destination).isInCheck) //Make sure the king is not tyring to move their king to a tile which would put them in check
+            {
+                allowMove = true;
+            }
+        }
+    
+
+
         if (currentPlayer.Checked) //if the current player is checked
         {
             allowMove = false;
@@ -1368,7 +1379,7 @@ public class GameState
                 {
                     if (destination.row == checkingPiece.Position.row && destination.column == checkingPiece.Position.column) //check if the piece being moved is trying to capture the checking peice
                     {
-                        if (isMoveLegal(piece, destination).moveSuccess) //check if the move is legal
+                        if (isMoveLegal(piece, destination, false).moveSuccess) //check if the move is legal
                         {
                             allowMove = true;
                             break;
@@ -1395,7 +1406,7 @@ public class GameState
 
                             if (isDestinationThisIndex)
                             {
-                                for (int i = 1; i < numberOfTiles; i++)
+                                for (int i = 1; i <= numberOfTiles; i++)
                                 {
                                     tilesAlongPath.Add(((checkingPiece.Position.row + move.row * i), (checkingPiece.Position.column + move.column * i)));
                                 }
@@ -1407,7 +1418,7 @@ public class GameState
                         {
                             if (destination.row == tile.row && destination.column == tile.column)
                             {
-                                if (isMoveLegal(piece, destination).moveSuccess)
+                                if (isMoveLegal(piece, destination, false).moveSuccess)
                                 {
                                     allowMove = true;
                                     break;
@@ -1427,8 +1438,8 @@ public class GameState
                 
             }
         }
-        bool moveSuccess = isMoveLegal(piece, destination).moveSuccess;
-        bool isCapturingPiece = isMoveLegal(piece, destination).isCapturingPiece;
+        bool moveSuccess = isMoveLegal(piece, destination, false).moveSuccess;
+        bool isCapturingPiece = isMoveLegal(piece, destination, false).isCapturingPiece;
 
         if (allowMove)
         {
@@ -1454,19 +1465,39 @@ public class GameState
                 player1CheckingPiecesList = checkForCheck(player1).checkingPieces; //store the piece which may be putting player1 in check in the player1CheckingPiecesList field
                 player2.Checked = checkForCheck(player2).isInCheck; //as a move has occured check if black is now in check
                 player2CheckingPiecesList = checkForCheck(player2).checkingPieces; //store the pieces which may be putting player2 in check in the player2CheckingPiecesList field
-
-                player1.CheckMate = isPlayerinCheckmate(player1);
-                player2.CheckMate = isPlayerinCheckmate(player2);
+                if (player1.Checked) //first check the player is in check
+                {
+                    player1.CheckMate = isPlayerinCheckmate(player1);
+                }
+                else 
+                {
+                    foreach (var checkingPiece in player1CheckingPiecesList)
+                    {
+                        player1CheckingPiecesList.Remove(checkingPiece);
+                    }
+                    
+                }
+                if (player2.Checked)
+                {
+                    player2.CheckMate = isPlayerinCheckmate(player2);
+                }
+                else
+                {
+                    foreach (var checkingPiece in player2CheckingPiecesList)
+                    {
+                        player2CheckingPiecesList.Remove(checkingPiece);
+                    }
+                }
+               
             }
         }
     }
 
-    public (bool moveSuccess, bool isCapturingPiece) isMoveLegal(IPiece piece, (int row, int column) destination)
+    public (bool moveSuccess, bool isCapturingPiece) isMoveLegal(IPiece piece, (int row, int column) destination, bool wasFunctionCalledToCheckIfPlayerCanEscapeCheck)
     {
         bool moveSuccess = false; //used to determine if a move was successful
         bool isCapturingPiece = false; //this is so we know if we should run the logic which just moves a piece or if we should run the logic which moves and captures a piece
         
-
 
         var possibleMoves = piece.Moves();
 
@@ -1482,10 +1513,8 @@ public class GameState
 
         }
 
-        
 
-
-        if (piece.Color == playerTurn) //check if the piece being moved belongs to the player whos turn it currently is
+        if (piece.Color == playerTurn || wasFunctionCalledToCheckIfPlayerCanEscapeCheck) //check if the piece being moved belongs to the player whos turn it currently is //this causes a bug when canPieceBlockCheck calls this as its not the player turn and we need a way of just checking, so add a parameter called to cehck for check
         {
             if (piece.Color == itemColor.white)
             {
@@ -1499,6 +1528,17 @@ public class GameState
 
             if ((player1.playerTimeout != true) && (player2.playerTimeout != true)) //check a player hasn't timed out 
             {
+                if (gameBoard[destination.row, destination.column].IsOccupied)
+                {
+                    if (Pieces[destination.row][destination.column].PieceType == PieceTypes.king)
+                    {
+                        if (!wasFunctionCalledToCheckIfPlayerCanEscapeCheck)
+                        {
+                            return (moveSuccess, isCapturingPiece);
+                        }
+                        
+                    }
+                }
                
 
                 if (piece.PieceType == PieceTypes.pawn) //Check for if the piece is a pawn 
@@ -1819,13 +1859,13 @@ public class GameState
     public (List<IPiece> checkingPieces, bool isInCheck) checkForCheck(Player player)
     {
         bool isInCheck = false;   //whether the king is in check or not
-        List<IPiece> checkingPieces = checkDetectionSystem(player).checkingPiecesList; //the pieces which are putting the king in check
+        List<IPiece> checkingPieces = checkDetectionSystem(player, false).checkingPiecesList; //the pieces which are putting the king in check
 
-        isInCheck= checkDetectionSystem(player).isInCheck;
+        isInCheck= checkDetectionSystem(player, false).isInCheck;
 
         if (isInCheck)
         {
-            foreach (var piece in checkDetectionSystem(player).checkingPiecesList)
+            foreach (var piece in checkDetectionSystem(player, false).checkingPiecesList)
             {
                 gameBoard[piece.Position.row, piece.Position.column].isLightUpCheck = true;
             }
@@ -1836,7 +1876,7 @@ public class GameState
 
     public (bool isTrue, List<IPiece> BlockingPieces) canPieceBlockCheck(Player player)
     {
-        bool canBlockAllCheckingPieces = true; //assume initially that all pieces which check the king can be blocked - if a piece checking the king cannot be blocked this is set to false
+        bool canBlockAllCheckingPieces = false; //assume initially that all pieces which check the king can be blocked - if a piece checking the king cannot be blocked this is set to false
         List<IPiece> checkingPieces = new List<IPiece>();
         List<IPiece> pieceWhichBlocksCheck = new List<IPiece>(); //this is used to track the piece which is able to block check
 
@@ -1863,7 +1903,7 @@ public class GameState
             {
                 foreach (var playerPiece in player.playerPieces) //loop through all of the players pieces
                 {
-                    if (isMoveLegal(playerPiece, checkingPiece.Position).moveSuccess) //if a players piece cant capture the pawn
+                    if (isMoveLegal(playerPiece, checkingPiece.Position, true).moveSuccess) //if a players piece cant capture the pawn
                     {
                         pieceWhichBlocksCheck.Add(playerPiece); //if there is a pawn the player has which can capture the checkign piece add it to the list which contains the pieces which can take the king out of check
                         //canBlockAllCheckingPieces = false; //this would mean atleast one piece cant be captured by the player so the flag should be set to false
@@ -1879,7 +1919,7 @@ public class GameState
             {
                 foreach (var playerPiece in player.playerPieces) //loop through all of the players pieces
                 {
-                    if (isMoveLegal(playerPiece, checkingPiece.Position).moveSuccess) //if a players piece cant capture the knight
+                    if (isMoveLegal(playerPiece, checkingPiece.Position, true).moveSuccess) //if a players piece cant capture the knight
                     {
                          pieceWhichBlocksCheck.Add(playerPiece); //if there is a knight the player has which can capture the checking piece add it to the list which contains the pieces which can take the king out of check
                         //canBlockAllCheckingPieces = false; //this would mean that atleast one piece cant be captured by the player so the flag would be set to false
@@ -1914,7 +1954,7 @@ public class GameState
                         if (isDestinationThisIndex) //if the current offset is the offset which would allow the sliding piece to move to the king
                         {
                             //bool tileBlocked = false; //flag to check that a tile on the path from a piece position to its destination is not blocked
-                            for (int i = 1; i < numberOfTiles; i++)
+                            for (int i = 1; i <= numberOfTiles; i++) //we do less than or equals to to account for the final tile adjacent to the checking piece
                             {
                                 tilesAlongPath.Add(((checkingPiece.Position.row + move.row * i), (checkingPiece.Position.column + move.column * i))); //add all the tiles along this path to the list which stores the tiles between the sliding peice and the king                          
                             }
@@ -1926,7 +1966,7 @@ public class GameState
                     
                         if (playerPiece.PieceType != PieceTypes.king)
                         {
-                            if (isMoveLegal(playerPiece, checkingPiece.Position).moveSuccess)
+                            if (isMoveLegal(playerPiece, checkingPiece.Position, true).moveSuccess)
                             {
                                 //canAPieceBeMovedToAtleastOneTile = true;
                                 pieceWhichBlocksCheck.Add(playerPiece); //if there is piece which can move to one of these tiles add it to the list of peices which allow the king to escape check
@@ -1942,7 +1982,7 @@ public class GameState
                         //bool canAPieceBeMovedToAtleastOneTile = false;
                             if (playerPiece.PieceType != PieceTypes.king)
                             {
-                                if (isMoveLegal(playerPiece, tile).moveSuccess)
+                                if (isMoveLegal(playerPiece, tile, true).moveSuccess)
                                 {
                                     //canAPieceBeMovedToAtleastOneTile = true;
                                     pieceWhichBlocksCheck.Add(playerPiece); //if there is piece which can move to one of these tiles add it to the list of peices which allow the king to escape check
@@ -2148,13 +2188,13 @@ public class GameState
     public (List<IPiece> checkingPieces, bool isInCheck) checkIfKingInCheckAtPosition(Player player, (int row, int column) position)
     {
         bool isInCheck = false;
-        List<IPiece> checkingPieces = checkDetectionSystem(player, position).checkingPiecesList; //store the list of all the pieces putting the king in check if it were to move to that position
+        List<IPiece> checkingPieces = checkDetectionSystem(player, true, position).checkingPiecesList; //store the list of all the pieces putting the king in check if it were to move to that position
 
-        isInCheck = checkDetectionSystem(player, position).isInCheck;
+        isInCheck = checkDetectionSystem(player,true, position).isInCheck;
 
         if (isInCheck)
         {
-            foreach (var piece in checkDetectionSystem(player).checkingPiecesList)
+            foreach (var piece in checkDetectionSystem(player, true, position).checkingPiecesList)
             {
                 gameBoard[piece.Position.row, piece.Position.column].isLightUpCheck = true;
             }
@@ -2168,16 +2208,40 @@ public class GameState
     {
         bool canKingEscapeCheckByMoving = false; //flag to indicate if the king can escape check by moving
         bool canPieceBlockCheckFlag = false; //flag to indicate if a piece can block check
-        for (int i = 0; i < 8; i++)
+        for (int row = 0; row < 8; row++)
         {
-            for (int j = 0; j < 8; j++)
-            {
-                if (!checkIfKingInCheckAtPosition(player, (i, j)).isInCheck)
+            for (int column = 0; column < 8; column++)
+            {   if (isMoveLegal(player.playerKing, (row, column), true).moveSuccess) //if the move is legal only then check if the king can escape check by running the move
                 {
-                    canKingEscapeCheckByMoving = true;
-                    break;
+                    if (Pieces[row][column] != null) //if the position the king is trying to move to is occuppied
+                    {
+                        if (player.color != Pieces[row][column].Color) //check if the piece at this posiiton is not the same colour as the king as a player cant take its own piece
+                        {
+                            if (!checkIfKingInCheckAtPosition(player, (row, column)).isInCheck) //check if the king is not in check at this position
+                            {
+                                canKingEscapeCheckByMoving = true; //if so set the flag to true as the king can escape check by moving to this position
+                                break;
+                            }
+                        }
+                        else //if there is a piece at the psotion the king is trying to move to annd that peice is the same colour as the king just skip to the next index in the for loop
+                        {
+                            continue;
+                        }
+                    }
+                    else //if there is no piece at this position
+                    {
+                        if (!checkIfKingInCheckAtPosition(player, (row, column)).isInCheck) //check if the king is not in check at this position
+                        {
+                            canKingEscapeCheckByMoving = true; //if so set the flag to true as the king can escape check by moving to this position
+                            break;
+                        }
+                    }
+                    
                 }
-                
+                else //if the move is not legal there is no point in checking if the kign can escape check by moving there so just skip to the next index in the for loop
+                {
+                    continue;
+                }
             }
             if (canKingEscapeCheckByMoving)
             {
@@ -2393,44 +2457,48 @@ public class GameState
 
     public void capturePiece(IPiece piece, IPiece capturedPiece)
     {
-        if (capturedPiece.Color != piece.Color)
+        if (piece != null && capturedPiece != null)
         {
-            if (piece.Color == itemColor.white) //if its white who captured the puece
+            if (capturedPiece.Color != piece.Color)
             {
-                var type = piece.GetType();
+                if (piece.Color == itemColor.white) //if its white who captured the puece
+                {
+                    var type = piece.GetType();
 
-                player1.takenPieces.Add(capturedPiece);
+                    player1.takenPieces.Add(capturedPiece);
+                    player2.playerPieces.Remove(capturedPiece);
+                }
+                else //if its black who captured the piece
+                {
+                    player2.takenPieces.Add(capturedPiece);
+                    player1.playerPieces.Remove(capturedPiece);
+                }
+
+                /*if (playerTurn == itemColor.black) //if the piece is black remove it from the list which stores black's pieces
+                {
+
+                }
+                else //if the piece is white remove it from the list which stores white's pieces
+                {
+
+                }*/
+
+                piece.hasMoved = true;
+                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile which holds the pieces initial position to not occuppied
+                Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
+                piece.Position = capturedPiece.Position; //set the piece position to the destination
+
+                Pieces[piece.Position.row][piece.Position.column] = null; //remove the captured piece from the pieces list
+                Pieces[piece.Position.row][piece.Position.column] = piece; //set where the index of the captured piece in the Pieces list to hold the piece whihc captured it
+
+                gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the tile which holds the piece to be captured to be occuppied
+
+                hasPieceBeenCaptured = true; //indicate a piece has been captured
             }
-            else //if its black who captured the piece
-            {
-                player2.takenPieces.Add(capturedPiece);
-
-            }
-
-            if (capturedPiece.Color == itemColor.black) //if the piece is black remove it from the list which stores black's pieces
-            {
-                player2.playerPieces.Remove(capturedPiece);
-            }
-            else //if the piece is white remove it from the list which stores white's pieces
-            {
-                player1.playerPieces.Remove(capturedPiece);
-            }
-
-            piece.hasMoved = true;
-            gameBoard[piece.Position.row, piece.Position.column].IsOccupied = false; //set the tile which holds the pieces initial position to not occuppied
-            Pieces[piece.Position.row][piece.Position.column] = null; //Set the old index of the piece in the list to null
-            piece.Position = capturedPiece.Position; //set the piece position to the destination
-
-            Pieces[piece.Position.row][piece.Position.column] = null; //remove the captured piece from the pieces list
-            Pieces[piece.Position.row][piece.Position.column] = piece; //set where the index of the captured piece in the Pieces list to hold the piece whihc captured it
-
-            gameBoard[piece.Position.row, piece.Position.column].IsOccupied = true; //set the tile which holds the piece to be captured to be occuppied
-
-            hasPieceBeenCaptured = true; //indicate a piece has been captured
         }
     }
 
-    public (List<IPiece> checkingPiecesList, bool isInCheck) checkDetectionSystem(Player player, (int row, int column) position = default)
+    public (List<IPiece> checkingPiecesList, bool isInCheck) checkDetectionSystem(Player player, bool wasFunctionCalledToCheckIfKingWouldBeInCheckAtADifferentPosition, (int row, int column) position = default)
     {
         bool moveSuccess = false; //variable which determines if a piece is successfully able to move to a position - if an opposing piece can move to a location legally
         Player opposingPlayer; //the player who is attacking the king
@@ -2445,43 +2513,25 @@ public class GameState
         }
         else //if the position is an actual specified value this means the function call is requesting to use the psoition parameter instead
         {
-            if (Pieces[position.row][position.column] != null) //if the position passed in contains a piece
-            {
-                if (player.playerKing.Color != Pieces[position.row][position.column].Color) //check that the players king and the position the players king is trying to move is not occuppied by a piece of the same colour
-                {
-                    destination = position;
-                }
-                else
-                {
-                    if (player.CheckMate) //if the king was previously checked then set the flag to true as the king cant legally make a move to escape check
-                    {
-                        isTrue = true;
-                    }
-                    isTrue = true; //set isTrue to true as the king cant move to this position so the king is still in check
-                    return (checkingPieces, isTrue);
-                }
-            }
-            else //if the position passed in doenst contain a piece
-            {
-
                 destination = position;
+        }
+        
+        
+            if (player.color == itemColor.white)
+            {
+                opposingPlayer = player2; //player 2 = black
             }
-        }
-
-        if (player.color == itemColor.white)
-        {
-            opposingPlayer = player2; //player 2 = black
-        }
-        else
-        {
-            opposingPlayer = player1;// player1 = white
-        }
+            else
+            {
+                opposingPlayer = player1;// player1 = white
+            }
+        
+        
 
         foreach (var piece in opposingPlayer.playerPieces)
         {
             var possibleMoves = piece.Moves();
-                        
-
+                      
                 if ((player1.playerTimeout != true) && (player2.playerTimeout != true)) //check a player hasn't timed out 
                 {
 
@@ -2731,29 +2781,30 @@ public class GameState
                 }
             if (moveSuccess) //if any piece can legally move to the position then there is no need to check other pieces as this tells us that position is check 
             {
-                checkingPieces.Add(piece); //if the move is successful then the piece whihc is doing the checking is this current piece
-                isTrue = true;
-                moveSuccess = false;
-                break;
+                if (wasFunctionCalledToCheckIfKingWouldBeInCheckAtADifferentPosition) //check if the fucntion was called to see if an opposing players piece could move to a position the players king is trying to move to
+                {
+                   
+                        isTrue = true; //set the flag to true
+                        moveSuccess = false;
+                        break;
+                     //we dont add this piece to the list of checking pieces because the piece is not actually checking the king its just a piece which can move to the location the king is trying to move to 
+                }
+                else
+                {
+                    if (isMoveLegal(piece, (destination.row, destination.column), true).isCapturingPiece) //only of the opposing players piece which can move to where the king is trying to do so can do it through capturing allow the fucntion to return true. The third parameter in the isMoveLegal function call is set to true as the checkDetectionSystem function is called for a player even when its not that player’s turn to move.
+                    {
+                        checkingPieces.Add(piece); //if the move is successful then the piece whihc is doing the checking is this current piece
+                        isTrue = true;
+                        moveSuccess = false;
+                        break;
+
+                    }
+                }
+                
             }
-        }
-        if (destination != player.playerKing.Position) //check if the king is not moveing to teh same position it was already in
-        {
-            if (isMoveLegal(player.playerKing, destination).moveSuccess) //check if the king moving to this position is possible
-            {
-                return (checkingPieces, isTrue);
-            }
-            else //if the king cant move to this position then the king would have to stay in its old position  and state
-            {
-                isTrue = true;
-                 //change position to destination
-                return (checkingPieces, isTrue);
-            }
-        }
-        
-            return (checkingPieces, isTrue);
-        
-        
+        }        
+        return (checkingPieces, isTrue);
+   
     }
     
     /*public bool checkForCheck((int row, int column) possiblePosition, Player player, bool isCheckingForEscapingCheck)
