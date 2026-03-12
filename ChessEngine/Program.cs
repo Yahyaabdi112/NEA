@@ -13,18 +13,7 @@ game.addPieces();
 
 Console.WriteLine("The game board and pieces are loaded into memory!");
 
-/*game.MakeMove(game.Pieces[6][4], (4, 4));
-game.MakeMove(game.Pieces[1][3], (3, 3));*/
 
-
-/*Console.WriteLine("Player 1:");
-Console.WriteLine(game.player1.timeRemaining);
-Console.WriteLine("Player 2:");
-Console.WriteLine(game.player2.timeRemaining);*/
-
-/*game.MakeMove(game.Pieces[6][4], (4, 4), false);
-game.MakeMove(game.Pieces[1][5], (3, 5), false);
-game.MakeMove(game.Pieces[7][3], (3, 7), false);*/
 
 
 

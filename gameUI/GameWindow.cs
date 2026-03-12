@@ -336,8 +336,7 @@ namespace gameUI
             this.MouseMove += GameWindow_MouseMove;
             this.MouseUp += GameWindow_MouseUp;
 
-            // plr1time.Text = 0.17826.ToString();
-            //plr2time.Text = 0.17826.ToString();
+
 
             refreshScreen.Start(); //start the timer which refreshes the screen
             lightUpTileDebounce.Start(); //start the timer which removes the green dots when needed
