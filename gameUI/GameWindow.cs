@@ -44,23 +44,7 @@ namespace gameUI
 
         private void RefreshScreen_Tick(object? sender, EventArgs e)
         {
-            if (game.isGameEnd && isMessageBoxShown == false) //check if the game is over and the message box saying the game is over is not shown
-            {
-                isMessageBoxShown = true; //set the flag which says if the message box is shown to true
-                string winner = "";
-                string endReason = game.endCondition.ToString();
-                if (game.Winner.color == itemColor.white)
-                {
-                    winner = "White";
-                }
-                else
-                {
-                    winner = "Black";
-                }
-
-                MessageBox.Show($"Game over \n The Winner is: {winner} by {endReason}", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            }
+            
 
             if (game.hasPieceBeenCaptured)
             {
@@ -260,8 +244,24 @@ namespace gameUI
             {
                 lblGameInfo.Text = "Black is in Checkmate";
             }
-            
 
+            if (game.isGameEnd && isMessageBoxShown == false) //check if the game is over and the message box saying the game is over is not shown
+            {
+                isMessageBoxShown = true; //set the flag which says if the message box is shown to true
+                string winner = "";
+                string endReason = game.endCondition.ToString();
+                if (game.Winner.color == itemColor.white)
+                {
+                    winner = "White";
+                }
+                else
+                {
+                    winner = "Black";
+                }
+
+                MessageBox.Show($"Game over \n The Winner is: {winner} by {endReason}", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            }
 
             Refresh();
         }
