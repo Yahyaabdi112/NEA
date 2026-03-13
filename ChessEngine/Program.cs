@@ -1030,7 +1030,7 @@ public class GameState
 
             if ((player1.playerTimeout != true) && (player2.playerTimeout != true)) //check a player hasn't timed out 
             {
-                if (gameBoard.GetLength(0) <= destination.row && gameBoard.GetLength(1) <= destination.column)
+                if ((destination.row <=7  && destination.column <= 7) && (0 <= destination.row &&  0<= destination.column))
                 {
                     if (gameBoard[destination.row, destination.column].IsOccupied)
                     {
@@ -1257,65 +1257,72 @@ public class GameState
                             bool tileBlocked = false; //flag to check that a tile on the path from a piece position to its destination is not blocked
                                                       //while (piece.Position.row <= destination.row && piece.Position.column <= destination.column)
                             {
+                                
                                 for (int i = 1; i <= index; i++) //loop through from 1 to the multiplier (this is to check the tiles in between the destination tile and piece position tile)
                                 {
-                                    if (piece.PieceType == PieceTypes.king) //the king can only move one square in any direction, this avoids the king being allowed the same movement pattern as the queen
+                                    if ((piece.Position.row + (move.row * i) <= 7 && piece.Position.column + (move.column * i) <= 7) && (0 <= piece.Position.row + (move.row * i)  && 0 <= piece.Position.column + (move.column * i)))
                                     {
-                                        if (index > 1) break;
-                                    }
-                                    if (gameBoard[piece.Position.row + (move.row * i), piece.Position.column + (move.column * i)].IsOccupied == false)// multiply the offset by i then add this to the pieces current position adn check if any tiles along this path are occupied
-                                    {
-                                        if (!tileBlocked) //Only allow the tile blocked flag to be set to false if it hasnt previously been set to true. This prevents a tile being blocked, then a tile after that being free making this flag be set to false
+                                        if (piece.PieceType == PieceTypes.king) //the king can only move one square in any direction, this avoids the king being allowed the same movement pattern as the queen
                                         {
-                                            tileBlocked = false; //set the flag to false as no tiles along the path are occuppied
+                                            if (index > 1) break;
                                         }
-                                    }
-                                    else //if a tile along the path is occuppied
-                                    {
-
-                                        tileBlocked = true; //set the flag to true to indicate that a tile along this path is blocked 
-                                        moveSuccess = false; //if there are occuppied tiles then dont allow the piece to move
-                                    }
-
-                                    if (index == 1) //check if the piece is trying to move only one square - this is for capturing a piece
-                                    {
-                                        if (i == 1) //now check if its on its first iteration
+                                        if (gameBoard[piece.Position.row + (move.row * i), piece.Position.column + (move.column * i)].IsOccupied == false)// multiply the offset by i then add this to the pieces current position adn check if any tiles along this path are occupied
                                         {
-                                            if (gameBoard[destination.row, destination.column].IsOccupied == true) //check if we are taking a piece - this mean we would have checked every tile in between the start position and the end position and now we are manually checking the end position
+                                            if (!tileBlocked) //Only allow the tile blocked flag to be set to false if it hasnt previously been set to true. This prevents a tile being blocked, then a tile after that being free making this flag be set to false
                                             {
-                                                moveSuccess = true;
-                                                isCapturingPiece = true;
-                                                break;
+                                                tileBlocked = false; //set the flag to false as no tiles along the path are occuppied
                                             }
                                         }
-                                    }
-                                    else //if the piece is trying to move more than one square - this is for capturing a piece
-                                    {
-                                        if (i == index - 1) //check if we have gone through every tile in between the pieces position and destination
+                                        else //if a tile along the path is occuppied
                                         {
-                                            if (gameBoard[piece.Position.row + (move.row * i), piece.Position.column + (move.column * i)].IsOccupied == false)
+
+                                            tileBlocked = true; //set the flag to true to indicate that a tile along this path is blocked 
+                                            moveSuccess = false; //if there are occuppied tiles then dont allow the piece to move
+                                        }
+
+                                        if (index == 1) //check if the piece is trying to move only one square - this is for capturing a piece
+                                        {
+                                            if (i == 1) //now check if its on its first iteration
                                             {
-                                                if (!tileBlocked)
+                                                if (gameBoard[destination.row, destination.column].IsOccupied == true) //check if we are taking a piece - this mean we would have checked every tile in between the start position and the end position and now we are manually checking the end position
                                                 {
-                                                    if (gameBoard[destination.row, destination.column].IsOccupied == true) //check if we are taking a piece - this measn we would have checked every tile in between the start position and the end position and now we are manually checking the end position
+                                                    moveSuccess = true;
+                                                    isCapturingPiece = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        else //if the piece is trying to move more than one square - this is for capturing a piece
+                                        {
+                                            if (i == index - 1) //check if we have gone through every tile in between the pieces position and destination
+                                            {
+                                                if (gameBoard[piece.Position.row + (move.row * i), piece.Position.column + (move.column * i)].IsOccupied == false)
+                                                {
+                                                    if (!tileBlocked)
                                                     {
-                                                        moveSuccess = true;
-                                                        isCapturingPiece = true;
-                                                        break;
+                                                        if ((destination.row <= 7 && destination.column <= 7) && (0 <= destination.row && 0 <= destination.column))
+                                                        {
+                                                            if (gameBoard[destination.row, destination.column].IsOccupied == true) //check if we are taking a piece - this measn we would have checked every tile in between the start position and the end position and now we are manually checking the end position
+                                                            {
+                                                                moveSuccess = true;
+                                                                isCapturingPiece = true;
+                                                                break;
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
-                                    }
-                                    if (i == index) //check if this current iteration is the interation which would give us the pieces destination - this is not for capturing a piece so we go all the way to the destination as we are expecting this tile to not be occupied
-                                    {
-
-                                        if (tileBlocked == false) //check that no tiles along the path were blocked
+                                        if (i == index) //check if this current iteration is the interation which would give us the pieces destination - this is not for capturing a piece so we go all the way to the destination as we are expecting this tile to not be occupied
                                         {
-                                            moveSuccess = true; //if no tiles are occuppied then allow the piece to move and set the move success flag to true
-                                            hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move  
-                                        } //we dont have an else as we dont allow a move under any circumstances if a tile was occuppied along the path
 
+                                            if (tileBlocked == false) //check that no tiles along the path were blocked
+                                            {
+                                                moveSuccess = true; //if no tiles are occuppied then allow the piece to move and set the move success flag to true
+                                                hasPieceBeenCaptured = false; //change the flag to be false as a piece hasnt been captured this move  
+                                            } //we dont have an else as we dont allow a move under any circumstances if a tile was occuppied along the path
+
+                                        }
                                     }
                                 }
                             }
@@ -1340,14 +1347,17 @@ public class GameState
 
                         if (isDestinationThisMove)
                         {
-                            if (gameBoard[destination.row, destination.column].IsOccupied == false)
+                            if ((destination.row <= 7 && destination.column <= 7) && (0 <= destination.row && 0 <= destination.column))
                             {
-                                moveSuccess = true; //if the destination tile is not occupied allow the move
-                            }
-                            else
-                            {
-                                isCapturingPiece = true;
-                                moveSuccess = true; //if the destination tile is occuppied and the knight can capture it allow the move
+                                if (gameBoard[destination.row, destination.column].IsOccupied == false)
+                                {
+                                    moveSuccess = true; //if the destination tile is not occupied allow the move
+                                }
+                                else
+                                {
+                                    isCapturingPiece = true;
+                                    moveSuccess = true; //if the destination tile is occuppied and the knight can capture it allow the move
+                                }
                             }
                         }
                     }
@@ -2169,7 +2179,9 @@ public class GameState
                                 bool tileBlocked = false; //flag to check that a tile on the path from a piece position to its destination is not blocked
                                                           //while (piece.Position.row <= destination.row && piece.Position.column <= destination.column)
                                 {
-                                    for (int i = 1; i <= index; i++) //loop through from 1 to the multiplier (this is to check the tiles in between the destination tile and piece position tile)
+                                for (int i = 1; i <= index; i++) //loop through from 1 to the multiplier (this is to check the tiles in between the destination tile and piece position tile)
+                                {
+                                    if ((piece.Position.row + (move.row * i) <= 7 && piece.Position.column + (move.column * i) <= 7) && (0 <= piece.Position.row + (move.row * i) && 0 <= piece.Position.column + (move.column * i)))
                                     {
                                         if (piece.PieceType == PieceTypes.king) //the king can only move one square in any direction, this avoids the king being allowed the same movement pattern as the queen
                                         {
@@ -2227,6 +2239,7 @@ public class GameState
 
                                         }
                                     }
+                                }
                                 }
                             }
                             if (moveSuccess)
