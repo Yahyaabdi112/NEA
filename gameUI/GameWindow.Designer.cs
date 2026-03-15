@@ -78,6 +78,7 @@
             // 
             // plr2time
             // 
+            plr2time.Anchor = AnchorStyles.Right;
             plr2time.AutoSize = true;
             plr2time.BackColor = Color.Snow;
             plr2time.Font = new Font("Arial Rounded MT Bold", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -89,6 +90,7 @@
             // 
             // plr1time
             // 
+            plr1time.Anchor = AnchorStyles.Right;
             plr1time.AutoSize = true;
             plr1time.BackColor = Color.Snow;
             plr1time.Font = new Font("Arial Rounded MT Bold", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -100,6 +102,7 @@
             // 
             // plr2CapturedPiecesBox
             // 
+            plr2CapturedPiecesBox.Anchor = AnchorStyles.Right;
             plr2CapturedPiecesBox.BackColor = Color.DarkOrange;
             plr2CapturedPiecesBox.ForeColor = SystemColors.ActiveCaptionText;
             plr2CapturedPiecesBox.Location = new Point(664, 59);
@@ -111,6 +114,7 @@
             // 
             // plr1CapturedPiecesBox
             // 
+            plr1CapturedPiecesBox.Anchor = AnchorStyles.Right;
             plr1CapturedPiecesBox.BackColor = Color.DarkOrange;
             plr1CapturedPiecesBox.ForeColor = SystemColors.ActiveCaptionText;
             plr1CapturedPiecesBox.Location = new Point(664, 396);
@@ -122,6 +126,7 @@
             // 
             // lblGameInfo
             // 
+            lblGameInfo.Anchor = AnchorStyles.Right;
             lblGameInfo.AutoSize = true;
             lblGameInfo.BackColor = Color.Snow;
             lblGameInfo.Font = new Font("Arial Rounded MT Bold", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);

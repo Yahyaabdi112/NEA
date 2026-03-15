@@ -132,6 +132,7 @@
             Controls.Add(lblPlayer2);
             Controls.Add(lblPlayer1);
             Controls.Add(label1);
+            DoubleBuffered = true;
             Name = "GameSettings";
             Text = "GameSettings";
             Load += GameSettings_Load;

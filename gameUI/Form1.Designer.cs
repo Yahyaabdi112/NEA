@@ -102,6 +102,7 @@
             Controls.Add(btnplay);
             Controls.Add(btntutorial);
             Controls.Add(label1);
+            DoubleBuffered = true;
             Name = "Form1";
             Text = "Form1";
             Load += Form1_Load;
