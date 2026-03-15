@@ -21,31 +21,18 @@ Console.WriteLine("The game board and pieces are loaded into memory!");
 
 
 public enum PieceTypes //The different possible types of pieces. With this we can set the different piece types later on and determine what type a piece is.  
-
 {
-
     pawn,
-
     knight,
-
     bishop,
-
     rook,
-
     queen,
-
     king
-
-
 }
 
 public enum itemColor //The different possible piece colours. With this we can set pieces and tiles colours later on and determine what color a piece is.  
-
 {
-
     black, white
-
-
 }
 
 public enum EndCondition //the different reasons why the game could end
@@ -56,20 +43,12 @@ public enum EndCondition //the different reasons why the game could end
     Resignation
 }
 public interface IPiece //The basis for each piece in the project. Its used as a contract so each direct piece class knows it must require these things. Used so that we dont directly create objects of pieces in classes later on when we want to add functionality.  
-
 {
-
     (int row, int column) Position { get; set; } //The position of each piece on the board. Uses a tuple with row and column.  
-
     itemColor Color { get; set; } //The Colour of each piece. Uses the Enum Color from earlier as its type  
-
     PieceTypes PieceType { get; set; } //The type of each piece. Uses the Enum PieceTypes from earlier as its type  
-
     IEnumerable<(int row, int column)>? Moves(); //A method with type of an IEnumerable tuple. This is so we can set and determine the possible moves a piece makes. Its IEnumerable so we can iterate through these possible moves meaning they can be passed between different data structures such as arrays and lists. Its a tuple with row and column so that we can get the exact coordinates of each possible move returned in a nice easy to work with format  
-
     bool hasMoved { get; set; }
-
-
 }
 
 
@@ -767,7 +746,8 @@ public class GameState
     public bool isMoveEscapedCheck = false; //flag used to signal if a move would let a player escape check
     public bool hasRecursiveCallHappened = false; //used to signal when a recursive call for the checking if a player can exit check has already happened - this stops infinite calls
 
-
+    public bool blackHasResigned;
+    public bool whiteHasResigned;
 
     bool arePiecesLoaded = false; //used as a flag so that the check for check method doesn't run before pieces are loaded
     List<IPiece> player1CheckingPiecesList; //list of all the pieces checking player 1
@@ -792,7 +772,8 @@ public class GameState
             Pieces.Add(row); //for each of these 8 outer iterations, add the list created as an element of the Pieces list
         }
 
-
+        blackHasResigned = false;
+        whiteHasResigned = false;
 
 
         player1 = new Player(itemColor.white, player1Name, gameTime);
@@ -1030,21 +1011,26 @@ public class GameState
 
             if ((player1.playerTimeout != true) && (player2.playerTimeout != true)) //check a player hasn't timed out 
             {
-                if ((destination.row <=7  && destination.column <= 7) && (0 <= destination.row &&  0<= destination.column))
+                if (!blackHasResigned && !whiteHasResigned)
                 {
-                    if (gameBoard[destination.row, destination.column].IsOccupied)
+                    if (!player1.CheckMate && player2.CheckMate)
                     {
-                        if (Pieces[destination.row][destination.column].PieceType == PieceTypes.king)
+                        if ((destination.row <= 7 && destination.column <= 7) && (0 <= destination.row && 0 <= destination.column))
                         {
-                            if (!wasFunctionCalledToCheckIfPlayerCanEscapeCheck)
+                            if (gameBoard[destination.row, destination.column].IsOccupied)
                             {
-                                return (moveSuccess, isCapturingPiece);
-                            }
+                                if (Pieces[destination.row][destination.column].PieceType == PieceTypes.king)
+                                {
+                                    if (!wasFunctionCalledToCheckIfPlayerCanEscapeCheck)
+                                    {
+                                        return (moveSuccess, isCapturingPiece);
+                                    }
 
+                                }
+                            }
                         }
                     }
                 }
-
                 if (piece.PieceType == PieceTypes.pawn) //Check for if the piece is a pawn 
 
                 {
@@ -2323,7 +2309,7 @@ public class GameState
         TimeSpan oneSecond = new TimeSpan(0, 0, 1); //variable just used so we can subtract a second
         TimeSpan zeroSeconds = new TimeSpan(0, 0, 0); //variable used so we can convert 0 minutes and seconds into a time span
 
-        if ((player1.timeRemaining > zeroSeconds) && (player2.timeRemaining > zeroSeconds)) //check if each player has above 0 seconds left if so continue as normal and subtract a second each
+        if ((player1.timeRemaining > zeroSeconds) && (player2.timeRemaining > zeroSeconds) && !blackHasResigned && !whiteHasResigned && !player1.CheckMate && !player2.CheckMate && !player1.playerTimeout && !player2.playerTimeout) //check if each player has above 0 seconds left if so continue as normal and subtract a second each, also check for other conditions which tht tome subtractiong system should stop
         {
             if (playerTurn == itemColor.white) //white is player 1
             {
@@ -2351,8 +2337,19 @@ public class GameState
                 isGameEnd = true; //set the game to have ended
             }
         }
-
         
+        if (blackHasResigned && !whiteHasResigned && !player1.CheckMate && !player2.CheckMate && !player1.playerTimeout && !player2.playerTimeout)
+        {
+            isGameEnd = true;
+            Winner = player1;
+            endCondition = EndCondition.Resignation;
+        }
+        if (whiteHasResigned && !blackHasResigned && !player1.CheckMate && !player2.CheckMate && !player1.playerTimeout && !player2.playerTimeout)
+        {
+            isGameEnd = true;
+            Winner = player2;
+            endCondition = EndCondition.Resignation;
+        }
 
     }
 

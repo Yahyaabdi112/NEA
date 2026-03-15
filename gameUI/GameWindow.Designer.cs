@@ -36,6 +36,8 @@
             plr2CapturedPiecesBox = new GroupBox();
             plr1CapturedPiecesBox = new GroupBox();
             lblGameInfo = new Label();
+            btnBlackResign = new Button();
+            BtnWhiteResign = new Button();
             SuspendLayout();
             // 
             // btnquit
@@ -44,7 +46,7 @@
             btnquit.AutoSize = true;
             btnquit.BackColor = Color.Gold;
             btnquit.Font = new Font("Arial", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnquit.Location = new Point(748, 166);
+            btnquit.Location = new Point(748, 217);
             btnquit.Name = "btnquit";
             btnquit.Size = new Size(143, 54);
             btnquit.TabIndex = 2;
@@ -123,11 +125,39 @@
             lblGameInfo.AutoSize = true;
             lblGameInfo.BackColor = Color.Snow;
             lblGameInfo.Font = new Font("Arial Rounded MT Bold", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblGameInfo.Location = new Point(664, 238);
+            lblGameInfo.Location = new Point(664, 296);
             lblGameInfo.Name = "lblGameInfo";
             lblGameInfo.Size = new Size(103, 22);
             lblGameInfo.TabIndex = 10;
             lblGameInfo.Text = "Game Info";
+            // 
+            // btnBlackResign
+            // 
+            btnBlackResign.Anchor = AnchorStyles.Right;
+            btnBlackResign.AutoSize = true;
+            btnBlackResign.BackColor = Color.OrangeRed;
+            btnBlackResign.Font = new Font("Arial", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnBlackResign.Location = new Point(730, 164);
+            btnBlackResign.Name = "btnBlackResign";
+            btnBlackResign.Size = new Size(152, 36);
+            btnBlackResign.TabIndex = 11;
+            btnBlackResign.Text = "Black Resign";
+            btnBlackResign.UseVisualStyleBackColor = false;
+            btnBlackResign.Click += btnBlackResign_Click;
+            // 
+            // BtnWhiteResign
+            // 
+            BtnWhiteResign.Anchor = AnchorStyles.Right;
+            BtnWhiteResign.AutoSize = true;
+            BtnWhiteResign.BackColor = Color.OrangeRed;
+            BtnWhiteResign.Font = new Font("Arial", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            BtnWhiteResign.Location = new Point(730, 335);
+            BtnWhiteResign.Name = "BtnWhiteResign";
+            BtnWhiteResign.Size = new Size(154, 36);
+            BtnWhiteResign.TabIndex = 12;
+            BtnWhiteResign.Text = "White Resign";
+            BtnWhiteResign.UseVisualStyleBackColor = false;
+            BtnWhiteResign.Click += BtnWhiteResign_Click;
             // 
             // GameWindow
             // 
@@ -135,6 +165,8 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.SaddleBrown;
             ClientSize = new Size(903, 528);
+            Controls.Add(BtnWhiteResign);
+            Controls.Add(btnBlackResign);
             Controls.Add(lblGameInfo);
             Controls.Add(plr1CapturedPiecesBox);
             Controls.Add(plr2CapturedPiecesBox);
@@ -159,5 +191,7 @@
         private GroupBox plr2CapturedPiecesBox;
         private GroupBox plr1CapturedPiecesBox;
         private Label lblGameInfo;
+        private Button btnBlackResign;
+        private Button BtnWhiteResign;
     }
 }

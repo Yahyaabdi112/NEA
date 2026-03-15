@@ -20,6 +20,8 @@ namespace gameUI
         static string plr1name;
         static string plr2name;
         static bool isMessageBoxShown = false; //flag which says if the message box
+        bool isCurrentWindowGameWindow = true;
+
 
         System.Windows.Forms.Timer refreshScreen = new System.Windows.Forms.Timer();
         System.Windows.Forms.Timer lightUpTileDebounce = new System.Windows.Forms.Timer(); //timer which for handlelling the green dot indicators
@@ -44,7 +46,7 @@ namespace gameUI
 
         private void RefreshScreen_Tick(object? sender, EventArgs e)
         {
-            
+
 
             if (game.hasPieceBeenCaptured)
             {
@@ -124,7 +126,7 @@ namespace gameUI
                             pieceImage.Image = blackKing;
                             pieceImage.Location = new Point(xPiecePicturePositionBlack, yPiecePicturePositionBlack);
                             plr1CapturedPiecesBox.Controls.Add(pieceImage);
-                        }        
+                        }
                     }
 
 
@@ -151,7 +153,7 @@ namespace gameUI
                     pieceImage.Size = new Size(35, 35);
                     if (piece.PieceType == PieceTypes.pawn)
                     {
-                        
+
                         if (piece.Color == itemColor.white)
                         {
                             pieceImage.Image = whitePawn;
@@ -245,7 +247,18 @@ namespace gameUI
                 lblGameInfo.Text = "Black is in Checkmate";
             }
 
-            if (game.isGameEnd && isMessageBoxShown == false) //check if the game is over and the message box saying the game is over is not shown
+            if (game.blackHasResigned)
+            {
+                lblGameInfo.Text = "Black has Resigned";
+            }
+            else if (game.whiteHasResigned)
+            {
+                lblGameInfo.Text = "White has Resigned";
+            }
+
+
+
+            if (game.isGameEnd && isMessageBoxShown == false && isCurrentWindowGameWindow) //check if the game is over and the message box saying the game is over is not shown
             {
                 isMessageBoxShown = true; //set the flag which says if the message box is shown to true
                 string winner = "";
@@ -322,6 +335,11 @@ namespace gameUI
             Form1 form = new Form1();
             form.Show();
             this.Hide();
+
+            isMessageBoxShown = false; //set the flag to indicate whether a message box has been shown to be false if the user exits the game window so that the next time the user opens the game window the message box can be seen again
+            game.blackHasResigned = false; //reset the flags to show a player has resigned so that they are ready for the next game
+            game.whiteHasResigned = false;
+            isCurrentWindowGameWindow = false;
         }
 
         private void GameWindow_Load(object sender, EventArgs e)
@@ -639,7 +657,23 @@ namespace gameUI
 
         }
 
-       
+        private void btnBlackResign_Click(object sender, EventArgs e)
+        {
+            if (!game.whiteHasResigned && !game.player1.CheckMate && !game.player2.CheckMate && !game.player1.playerTimeout && !game.player2.playerTimeout)
+            { 
+                game.blackHasResigned = true;
+            }
+            
+        }
+
+        private void BtnWhiteResign_Click(object sender, EventArgs e)
+        {
+            if (!game.blackHasResigned && !game.player1.CheckMate && !game.player2.CheckMate && !game.player1.playerTimeout && !game.player2.playerTimeout)
+            { 
+                game.whiteHasResigned = true;
+            }
+            
+        }
     }
 }
             
